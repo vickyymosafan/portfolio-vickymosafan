@@ -21,6 +21,7 @@ const HeroSection = () => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [isMounted, setIsMounted] = useState(false);
   const [blurValue, setBlurValue] = useState(8); // Initial blur
+  const [bgOpacity, setBgOpacity] = useState(1); // Initial background opacity
   const fullText = 'Fullstack Developer';
   const { scrollY } = useScroll();
   
@@ -62,6 +63,20 @@ const HeroSection = () => {
   useMotionValueEvent(backgroundBlurValue, "change", (latest) => {
     setBlurValue(latest);
   });
+
+  // ============================================================================
+  // BACKGROUND OPACITY - Fade out earlier for smooth cross-fade to TransitionSection
+  // ============================================================================
+  const backgroundOpacity = useTransform(
+    scrollY,
+    [0, windowSize.height * 0.5, windowSize.height * 0.8],
+    [1, 1, 0]  // Stay visible, then fade out for cross-fade overlap (0.5vh → 0.8vh)
+  );
+
+  // Update background opacity state based on scroll
+  useMotionValueEvent(backgroundOpacity, "change", (latest) => {
+    setBgOpacity(Math.max(0, Math.min(1, latest)));
+  });
   // ============================================================================
 
   useEffect(() => {
@@ -94,10 +109,13 @@ const HeroSection = () => {
     <section className="relative h-[200vh]">
       {/* Fixed Canvas Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Background with cinematic blur effect */}
+        {/* Background with cinematic blur effect and cross-fade opacity */}
         <div 
           className="absolute inset-0 transition-[filter] duration-100"
-          style={{ filter: `blur(${blurValue}px)` }}
+          style={{ 
+            filter: `blur(${blurValue}px)`,
+            opacity: bgOpacity  // Cross-fade out for smooth transition
+          }}
         >
           <ImageSequenceCanvas
             baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/burst/frame_000_delay-0.04s.webp"

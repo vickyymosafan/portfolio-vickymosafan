@@ -37,20 +37,20 @@ const TransitionSection = () => {
   const isMounted = useIsMounted();
 
   // ============================================================================
-  // SCROLL POSITIONS - Start when section preview appears at bottom of viewport
-  // HeroSection is 200vh with sticky, TransitionSection starts appearing around 100vh
+  // SCROLL POSITIONS - Start earlier for smooth cross-fade with HeroSection
+  // HeroSection fades out at 0.5vh → 0.8vh, so we start at 0.5vh
   // ============================================================================
-  const sectionStart = windowSize.height * 1;    // 100vh - when TransitionSection preview appears
-  const sectionEnd = windowSize.height * 3;      // 300vh - before AboutSection
+  const sectionStart = windowSize.height * 0.5;  // 50vh - start earlier for cross-fade overlap
+  const sectionEnd = windowSize.height * 2.5;    // 250vh - before AboutSection
 
   // ============================================================================
-  // LINEAR BACKGROUND OPACITY - Fade in smooth at start, fade out at end
+  // LINEAR BACKGROUND OPACITY - Cross-fade with HeroSection (0.5vh → 0.8vh)
   // ============================================================================
   const backgroundOpacity = useTransform(
     scrollY,
     [
-      sectionStart - windowSize.height * 0.2,  // Start fade in before section fully visible
-      sectionStart + windowSize.height * 0.1,  // Fully visible
+      sectionStart,                             // Start fade in at 0.5vh
+      sectionStart + windowSize.height * 0.3,  // Fully visible at 0.8vh
       sectionEnd - windowSize.height * 0.3,    // Start fade out
       sectionEnd                                // Fully hidden
     ],
@@ -142,9 +142,9 @@ const TransitionSection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative h-[150vh]">
-      {/* Fixed Canvas Container */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-background">
+    <section ref={sectionRef} className="relative h-[150vh] z-10">
+      {/* Fixed Canvas Container - z-20 to be above HeroSection during cross-fade */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* Background with cinematic blur effect and linear opacity */}
         <div 
           className="absolute inset-0 transition-[filter] duration-100"
