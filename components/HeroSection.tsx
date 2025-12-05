@@ -106,7 +106,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-[200vh]">
+    <section className="relative h-[150vh]">
       {/* Fixed Canvas Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* Background with cinematic blur effect and cross-fade opacity */}
@@ -118,7 +118,7 @@ const HeroSection = () => {
           }}
         >
           <ImageSequenceCanvas
-            baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/burst/frame_000_delay-0.04s.webp"
+            baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/impact/frame_000_delay-0.04s.webp"
             totalFrames={191}
             scrollStart={0}
             scrollEnd={windowSize.height}
