@@ -1,13 +1,47 @@
 "use client";
 
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { motion, useInView, useScroll, useTransform, animate } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
 import { Code2, Database, GitBranch, Layout, Zap, Shield } from 'lucide-react';
+
+// Animated Counter Component
+const AnimatedCounter = ({ 
+  value, 
+  suffix = '', 
+  duration = 2,
+  isInView 
+}: { 
+  value: number; 
+  suffix?: string; 
+  duration?: number;
+  isInView: boolean;
+}) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (isInView && !hasAnimated.current) {
+      hasAnimated.current = true;
+      const controls = animate(0, value, {
+        duration,
+        ease: "easeOut",
+        onUpdate: (latest) => {
+          setDisplayValue(Math.round(latest));
+        }
+      });
+      return () => controls.stop();
+    }
+  }, [isInView, value, duration]);
+
+  return (
+    <span>{displayValue}{suffix}</span>
+  );
+};
 
 const languages = ['HTML', 'CSS', 'JavaScript', 'TypeScript'];
 
 const techStack = [
-  'React', 'Next.js', 'Vue.js', 'Node.js', 'Express.js',
+  'React', 'Next.js', 'Vue.js', 'Node.js', 'Express.js', 'Nest.js',
   'Laravel', 'PostgreSQL', 'MySQL', 'MongoDB', 'VS Code', 'Git', 'GitHub'
 ];
 
@@ -19,9 +53,9 @@ const principles = [
 ];
 
 const stats = [
-  { value: '3+', label: 'Years Experience', icon: Zap },
-  { value: '10+', label: 'Projects Done', icon: Code2 },
-  { value: '100%', label: 'Code Quality', icon: Shield },
+  { value: 3, suffix: '+', label: 'Years Experience', icon: Zap },
+  { value: 10, suffix: '+', label: 'Projects Done', icon: Code2 },
+  { value: 100, suffix: '%', label: 'Code Quality', icon: Shield },
 ];
 
 const AboutSection = () => {
@@ -87,11 +121,38 @@ const AboutSection = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
               whileHover={{ scale: 1.05, y: -5 }}
-              className="glass-card p-6 rounded-2xl text-center group cursor-default"
+              className="glass-card p-6 rounded-2xl text-center group cursor-default relative overflow-hidden"
             >
-              <stat.icon className="w-6 h-6 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              <div className="text-3xl md:text-4xl font-bold text-gradient">{stat.value}</div>
-              <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+              {/* Glow effect on hover */}
+              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Icon with pulse animation */}
+              <motion.div
+                animate={isInView ? { scale: [1, 1.2, 1] } : {}}
+                transition={{ duration: 0.6, delay: 0.5 + index * 0.2 }}
+              >
+                <stat.icon className="w-6 h-6 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
+              </motion.div>
+              
+              {/* Animated Counter */}
+              <div className="text-3xl md:text-4xl font-bold text-gradient relative z-10">
+                <AnimatedCounter 
+                  value={stat.value} 
+                  suffix={stat.suffix} 
+                  duration={2 + index * 0.3}
+                  isInView={isInView}
+                />
+              </div>
+              
+              <div className="text-sm text-muted-foreground mt-1 relative z-10">{stat.label}</div>
+              
+              {/* Bottom accent line */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={isInView ? { scaleX: 1 } : {}}
+                transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-primary/50 to-transparent"
+              />
             </motion.div>
           ))}
         </motion.div>

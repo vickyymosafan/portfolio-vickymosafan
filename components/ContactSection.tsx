@@ -85,7 +85,7 @@ const ContactSection = () => {
             initial={{ scaleX: 0 }}
             animate={isInView ? { scaleX: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full mx-auto mt-6"
+            className="w-24 h-1 bg-linear-to-r from-transparent via-primary to-transparent rounded-full mx-auto mt-6"
           />
         </motion.div>
 
@@ -165,7 +165,7 @@ const ContactSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.6 }}
-              className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-accent/10 border border-primary/20"
+              className="p-6 rounded-2xl bg-linear-to-br from-primary/10 via-transparent to-accent/10 border border-primary/20"
             >
               <h4 className="font-semibold text-foreground mb-2">🚀 Ready to start?</h4>
               <p className="text-muted-foreground text-sm">
