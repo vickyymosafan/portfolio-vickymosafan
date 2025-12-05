@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import ImageSequenceCanvas from './ImageSequenceCanvas';
 import { useEffect, useState } from 'react';
@@ -20,11 +20,25 @@ const HeroSection = () => {
   const [displayText, setDisplayText] = useState('');
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  const [blurValue, setBlurValue] = useState(8); // Initial blur
   const fullText = 'Fullstack Developer';
   const { scrollY } = useScroll();
+  
+  // Content transforms
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
   const scale = useTransform(scrollY, [0, 300], [1, 0.95]);
   const y = useTransform(scrollY, [0, 300], [0, 50]);
+
+  // ============================================================================
+  // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp as text fades
+  // ============================================================================
+  const backgroundBlurValue = useTransform(scrollY, [0, 300], [8, 0]);
+  
+  // Update blur state based on scroll
+  useMotionValueEvent(backgroundBlurValue, "change", (latest) => {
+    setBlurValue(latest);
+  });
+  // ============================================================================
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,13 +70,19 @@ const HeroSection = () => {
     <section className="relative h-[200vh]">
       {/* Fixed Canvas Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <ImageSequenceCanvas
-          baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/burst/frame_000_delay-0.04s.webp"
-          totalFrames={191}
-          scrollStart={0}
-          scrollEnd={windowSize.height}
-          className="absolute inset-0"
-        />
+        {/* Background with cinematic blur effect */}
+        <div 
+          className="absolute inset-0 transition-[filter] duration-100"
+          style={{ filter: `blur(${blurValue}px)` }}
+        >
+          <ImageSequenceCanvas
+            baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/burst/frame_000_delay-0.04s.webp"
+            totalFrames={191}
+            scrollStart={0}
+            scrollEnd={windowSize.height}
+            className="absolute inset-0"
+          />
+        </div>
         
         {/* Gradient Overlays */}
         <div className="absolute inset-0 cinematic-overlay" />
