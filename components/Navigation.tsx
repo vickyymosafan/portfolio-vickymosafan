@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { Menu, X, Sparkles, Home, User, Briefcase, Mail, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -16,6 +16,14 @@ const sectionDots = [
   { id: 'about', label: 'About', href: '#about' },
   { id: 'experience', label: 'Experience', href: '#experience' },
   { id: 'contact', label: 'Contact', href: '#contact' },
+];
+
+// Sidebar items with icons
+const sidebarItems = [
+  { id: 'hero', label: 'Home', href: '#', icon: Home },
+  { id: 'about', label: 'About', href: '#about', icon: User },
+  { id: 'experience', label: 'Experience', href: '#experience', icon: Briefcase },
+  { id: 'contact', label: 'Contact', href: '#contact', icon: Mail },
 ];
 
 const Navigation = () => {
@@ -71,6 +79,7 @@ const Navigation = () => {
 
   return (
     <>
+      {/* Mobile Top Bar - Only visible on mobile */}
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ 
@@ -78,12 +87,13 @@ const Navigation = () => {
           opacity: isScrolled ? 1 : 0 
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-50 md:hidden"
       >
         <div className="glass-card mx-4 mt-4 rounded-full px-6 py-3 border border-border/50">
           <div className="flex items-center justify-between">
             <motion.a 
               href="#" 
+              onClick={() => handleClick('#')}
               className="flex items-center gap-2 font-display text-lg font-semibold"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -92,47 +102,10 @@ const Navigation = () => {
               <span className="text-gradient">VM</span>
             </motion.a>
 
-            {/* Desktop Nav */}
-            <ul className="hidden md:flex items-center gap-2">
-              {navItems.map((item) => (
-                <li key={item.name}>
-                  <motion.button
-                    onClick={() => handleClick(item.href)}
-                    className={`relative px-4 py-2 rounded-full text-sm tracking-wide transition-colors ${
-                      activeSection === item.href.slice(1)
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {activeSection === item.href.slice(1) && (
-                      <motion.div
-                        layoutId="activeNav"
-                        className="absolute inset-0 bg-primary/10 rounded-full"
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">{item.name}</span>
-                  </motion.button>
-                </li>
-              ))}
-              <li>
-                <motion.button
-                  onClick={() => handleClick('#contact')}
-                  className="ml-2 px-5 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium"
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 20px hsl(45 100% 60% / 0.4)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Hire Me
-                </motion.button>
-              </li>
-            </ul>
-
             {/* Mobile Menu Button */}
             <motion.button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 text-foreground rounded-full hover:bg-secondary transition-colors"
+              className="p-2 text-foreground rounded-full hover:bg-secondary transition-colors"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -163,6 +136,78 @@ const Navigation = () => {
           </div>
         </div>
       </motion.nav>
+
+      {/* Desktop Vertical Icon Sidebar - Left Side */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className="fixed left-6 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-5"
+      >
+        {/* Logo */}
+        <motion.button
+          onClick={() => handleClick('#')}
+          className="mb-2"
+          whileHover={{ scale: 1.1, rotate: 15 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <Sparkles className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(45_100%_60%/0.5)]" />
+        </motion.button>
+        
+        {/* Divider */}
+        <div className="w-6 h-px bg-muted-foreground/20" />
+        
+        {/* Nav Icons */}
+        {sidebarItems.map((item) => (
+          <motion.button
+            key={item.id}
+            onClick={() => handleClick(item.href)}
+            className="group relative p-2"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {/* Tooltip */}
+            <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-secondary/90 backdrop-blur-sm text-xs text-foreground opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap border border-border/50 shadow-lg pointer-events-none">
+              {item.label}
+            </span>
+            
+            {/* Icon */}
+            <item.icon 
+              className={`w-5 h-5 transition-all duration-300 ${
+                activeSection === item.id
+                  ? 'text-primary drop-shadow-[0_0_8px_hsl(45_100%_60%/0.6)]'
+                  : 'text-muted-foreground/50 group-hover:text-primary/70'
+              }`} 
+            />
+            
+            {/* Active indicator */}
+            {activeSection === item.id && (
+              <motion.div
+                className="absolute inset-0 rounded-lg bg-primary/10"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              />
+            )}
+          </motion.button>
+        ))}
+        
+        {/* Divider */}
+        <div className="w-6 h-px bg-muted-foreground/20" />
+        
+        {/* Hire Me */}
+        <motion.button
+          onClick={() => handleClick('#contact')}
+          className="group relative p-2"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-lg pointer-events-none font-medium">
+            Hire Me
+          </span>
+          <Send className="w-5 h-5 text-primary drop-shadow-[0_0_6px_hsl(45_100%_60%/0.4)]" />
+        </motion.button>
+      </motion.div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
