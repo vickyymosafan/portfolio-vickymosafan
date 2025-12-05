@@ -4,37 +4,43 @@ import { motion, useInView, useScroll, useTransform, animate } from 'framer-moti
 import { useRef, useEffect, useState } from 'react';
 import { Code2, Database, GitBranch, Layout, Zap, Shield } from 'lucide-react';
 
-// Animated Counter Component
+// Animated Counter Component with its own inView detection
 const AnimatedCounter = ({ 
   value, 
   suffix = '', 
   duration = 2,
-  isInView 
 }: { 
   value: number; 
   suffix?: string; 
   duration?: number;
-  isInView: boolean;
 }) => {
   const [displayValue, setDisplayValue] = useState(0);
+  const counterRef = useRef<HTMLSpanElement>(null);
   const hasAnimated = useRef(false);
+  const isInView = useInView(counterRef, { once: true, margin: '-50px' });
 
   useEffect(() => {
     if (isInView && !hasAnimated.current) {
       hasAnimated.current = true;
-      const controls = animate(0, value, {
-        duration,
-        ease: "easeOut",
-        onUpdate: (latest) => {
-          setDisplayValue(Math.round(latest));
-        }
-      });
-      return () => controls.stop();
+      
+      // Small delay to ensure smooth start
+      const timeout = setTimeout(() => {
+        const controls = animate(0, value, {
+          duration,
+          ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smooth animation
+          onUpdate: (latest) => {
+            setDisplayValue(Math.round(latest));
+          }
+        });
+        return () => controls.stop();
+      }, 100);
+      
+      return () => clearTimeout(timeout);
     }
   }, [isInView, value, duration]);
 
   return (
-    <span>{displayValue}{suffix}</span>
+    <span ref={counterRef}>{displayValue}{suffix}</span>
   );
 };
 
@@ -53,7 +59,7 @@ const principles = [
 ];
 
 const stats = [
-  { value: 3, suffix: '+', label: 'Years Experience', icon: Zap },
+  { value: 2, suffix: '+', label: 'Years Experience', icon: Zap },
   { value: 10, suffix: '+', label: 'Projects Done', icon: Code2 },
   { value: 100, suffix: '%', label: 'Code Quality', icon: Shield },
 ];
@@ -140,7 +146,6 @@ const AboutSection = () => {
                   value={stat.value} 
                   suffix={stat.suffix} 
                   duration={2 + index * 0.3}
-                  isInView={isInView}
                 />
               </div>
               
