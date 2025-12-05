@@ -52,11 +52,32 @@ const techStack = [
 ];
 
 const principles = [
-  { icon: Code2, title: 'Clean Code', desc: 'Modular & maintainable', color: 'from-blue-500/20 to-cyan-500/20' },
-  { icon: Layout, title: 'SOLID', desc: 'Design principles', color: 'from-purple-500/20 to-pink-500/20' },
-  { icon: GitBranch, title: 'DRY', desc: "Don't repeat yourself", color: 'from-green-500/20 to-emerald-500/20' },
-  { icon: Database, title: 'Scalable', desc: 'Ready for growth', color: 'from-orange-500/20 to-yellow-500/20' },
+  { icon: Code2, title: 'Clean Code', desc: 'Modular & maintainable', color: 'from-blue-500/20 to-cyan-500/20', iconGradient: 'from-blue-500/40 to-cyan-500/40' },
+  { icon: Layout, title: 'SOLID', desc: 'Design principles', color: 'from-purple-500/20 to-pink-500/20', iconGradient: 'from-purple-500/40 to-pink-500/40' },
+  { icon: GitBranch, title: 'DRY', desc: "Don't repeat yourself", color: 'from-green-500/20 to-emerald-500/20', iconGradient: 'from-green-500/40 to-emerald-500/40' },
+  { icon: Database, title: 'Scalable', desc: 'Ready for growth', color: 'from-orange-500/20 to-yellow-500/20', iconGradient: 'from-orange-500/40 to-yellow-500/40' },
 ];
+
+// Animation variants for staggered reveal
+const principlesContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const principleCardVariants = {
+  hidden: { opacity: 0, y: 25, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1
+  }
+};
 
 const stats = [
   { value: 2, suffix: '+', label: 'Years Experience', icon: Zap },
@@ -213,28 +234,68 @@ const AboutSection = () => {
             transition={{ duration: 0.8, delay: 0.4, type: "spring" }}
             className="space-y-8"
           >
-            {/* Principles */}
-            <div className="grid grid-cols-2 gap-4">
-              {principles.map((item, index) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                  whileHover={{ scale: 1.03, y: -3 }}
-                  className={`relative glass-card p-5 rounded-xl overflow-hidden group cursor-default`}
-                >
-                  {/* Gradient background on hover */}
-                  <div className={`absolute inset-0 bg-linear-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                  <div className="relative z-10">
-                    <div className="p-2 bg-primary/10 rounded-lg w-fit mb-3 group-hover:bg-primary/20 transition-colors">
-                      <item.icon className="w-5 h-5 text-primary" />
+            {/* Principles with Connecting Lines */}
+            <div className="relative">
+              {/* Connecting Lines - Center Cross */}
+              <div className="absolute inset-0 pointer-events-none hidden md:block">
+                {/* Horizontal line */}
+                <motion.div 
+                  initial={{ scaleX: 0 }}
+                  animate={isInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.8, delay: 0.8 }}
+                  className="absolute top-1/2 left-[15%] right-[15%] h-px bg-linear-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2"
+                />
+                {/* Vertical line */}
+                <motion.div 
+                  initial={{ scaleY: 0 }}
+                  animate={isInView ? { scaleY: 1 } : {}}
+                  transition={{ duration: 0.8, delay: 0.9 }}
+                  className="absolute left-1/2 top-[15%] bottom-[15%] w-px bg-linear-to-b from-transparent via-primary/30 to-transparent -translate-x-1/2"
+                />
+                {/* Center dot */}
+                <motion.div 
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={isInView ? { scale: 1, opacity: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 1.1 }}
+                  className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary/50 rounded-full -translate-x-1/2 -translate-y-1/2"
+                />
+              </div>
+
+              {/* Principles Grid */}
+              <motion.div 
+                variants={principlesContainerVariants}
+                initial="hidden"
+                animate={isInView ? "visible" : "hidden"}
+                className="grid grid-cols-2 gap-4 relative z-10"
+              >
+                {principles.map((item) => (
+                  <motion.div
+                    key={item.title}
+                    variants={principleCardVariants}
+                    whileHover={{ 
+                      scale: 1.05, 
+                      y: -8,
+                      transition: { duration: 0.2 }
+                    }}
+                    className="relative glass-card p-5 rounded-xl overflow-hidden group cursor-default transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10"
+                  >
+                    {/* Gradient background on hover */}
+                    <div className={`absolute inset-0 bg-linear-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                    
+                    {/* Border glow on hover */}
+                    <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-primary/30 transition-colors duration-300" />
+                    
+                    <div className="relative z-10">
+                      {/* Icon with gradient background */}
+                      <div className={`p-2.5 rounded-xl bg-linear-to-br ${item.iconGradient} w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                        <item.icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <h4 className="font-semibold text-foreground">{item.title}</h4>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
-                    <h4 className="font-semibold text-foreground">{item.title}</h4>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
 
             {/* Languages */}
