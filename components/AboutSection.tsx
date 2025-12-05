@@ -181,6 +181,9 @@ const AboutSection = () => {
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const orbScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 1]);
   
+  // Top gradient overlay - fades out as user scrolls into section
+  const topGradientOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  
   // Parallax transforms for different elements
   const statsY = useTransform(scrollYProgress, [0, 1], [60, -40]);
   const leftColumnY = useTransform(scrollYProgress, [0, 1], [40, -30]);
@@ -227,6 +230,12 @@ const AboutSection = () => {
         </filter>
         <rect width="100%" height="100%" filter="url(#noiseFilter)" />
       </svg>
+
+      {/* Top Gradient Overlay - Smooth transition from TransitionSection */}
+      <motion.div 
+        style={{ opacity: topGradientOpacity }}
+        className="absolute inset-x-0 top-0 h-[40vh] bg-linear-to-b from-background via-background/50 to-transparent pointer-events-none z-10"
+      />
 
       {/* Floating Particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">

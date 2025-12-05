@@ -45,14 +45,15 @@ const TransitionSection = () => {
 
   // ============================================================================
   // LINEAR BACKGROUND OPACITY - Cross-fade with HeroSection (0.5vh → 0.8vh)
+  // Fade out lebih lambat untuk transisi yang lebih smooth ke AboutSection
   // ============================================================================
   const backgroundOpacity = useTransform(
     scrollY,
     [
       sectionStart,                             // Start fade in at 0.5vh
       sectionStart + windowSize.height * 0.3,  // Fully visible at 0.8vh
-      sectionEnd - windowSize.height * 0.3,    // Start fade out
-      sectionEnd                                // Fully hidden
+      sectionEnd - windowSize.height * 0.15,   // Start fade out later (was 0.3)
+      sectionEnd + windowSize.height * 0.2     // Fade out extends beyond section end
     ],
     [0, 1, 1, 0]
   );
@@ -102,10 +103,10 @@ const TransitionSection = () => {
     [50, 0, 0, -30]
   );
 
-  // Gradient overlay opacity - fades in towards the end
+  // Gradient overlay opacity - fades in towards the end (slower transition)
   const gradientOpacity = useTransform(
     scrollY,
-    [sectionEnd - windowSize.height * 0.5, sectionEnd],
+    [sectionEnd - windowSize.height * 0.3, sectionEnd + windowSize.height * 0.1],
     [0, 1]
   );
 
