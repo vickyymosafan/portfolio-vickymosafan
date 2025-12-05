@@ -32,6 +32,49 @@ const FloatingParticle = ({
   />
 );
 
+// Text Reveal Animation Component (word by word)
+const TextReveal = ({ 
+  children, 
+  className = '', 
+  delay = 0,
+  isInView 
+}: { 
+  children: string; 
+  className?: string; 
+  delay?: number;
+  isInView: boolean;
+}) => {
+  const words = children.split(' ');
+  
+  return (
+    <span className={className}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 15, filter: 'blur(4px)' }}
+          animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+          transition={{ 
+            duration: 0.4, 
+            delay: delay + i * 0.025,
+            ease: [0.25, 0.46, 0.45, 0.94]
+          }}
+          className="inline-block mr-[0.25em]"
+        >
+          {word}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
+
+// Card slide directions for principles (from different corners)
+const cardDirections = [
+  { x: -40, y: -25, rotate: -5 },   // top-left
+  { x: 40, y: -25, rotate: 5 },    // top-right
+  { x: -40, y: 25, rotate: 5 },    // bottom-left
+  { x: 40, y: 25, rotate: -5 },    // bottom-right
+];
+
 // Animated Counter Component with its own inView detection
 const AnimatedCounter = ({ 
   value, 
@@ -98,14 +141,27 @@ const principlesContainerVariants = {
   }
 };
 
-const principleCardVariants = {
-  hidden: { opacity: 0, y: 25, scale: 0.95 },
+// Dynamic card variants based on direction
+const createCardVariants = (direction: { x: number; y: number; rotate: number }) => ({
+  hidden: { 
+    opacity: 0, 
+    x: direction.x, 
+    y: direction.y, 
+    scale: 0.9,
+    rotate: direction.rotate
+  },
   visible: { 
     opacity: 1, 
+    x: 0,
     y: 0, 
-    scale: 1
+    scale: 1,
+    rotate: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94] as const
+    }
   }
-};
+});
 
 const stats = [
   { value: 2, suffix: '+', label: 'Years Experience', icon: Zap },
@@ -124,6 +180,12 @@ const AboutSection = () => {
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const orbScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 1]);
+  
+  // Parallax transforms for different elements
+  const statsY = useTransform(scrollYProgress, [0, 1], [60, -40]);
+  const leftColumnY = useTransform(scrollYProgress, [0, 1], [40, -30]);
+  const rightColumnY = useTransform(scrollYProgress, [0, 1], [50, -35]);
+  const headerY = useTransform(scrollYProgress, [0, 1], [30, -20]);
 
   // Predefined particle positions for consistent rendering
   const particles = useMemo(() => [
@@ -238,23 +300,31 @@ const AboutSection = () => {
       </motion.div>
 
       <div className="max-w-6xl mx-auto relative" ref={ref}>
-        {/* Section Header */}
+        {/* Section Header with Parallax */}
         <motion.div
+          style={{ y: headerY }}
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, type: "spring" }}
           className="mb-16 text-center"
         >
           <motion.span 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
             className="inline-block px-4 py-1.5 mb-4 text-sm text-primary bg-primary/10 rounded-full"
           >
             About Me
           </motion.span>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="text-gradient">Passionate Developer</span>
+            <motion.span 
+              className="text-gradient inline-block"
+              initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+              animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              Passionate Developer
+            </motion.span>
           </h2>
           <motion.div 
             initial={{ scaleX: 0 }}
@@ -264,21 +334,27 @@ const AboutSection = () => {
           />
         </motion.div>
 
-        {/* Stats Row */}
+        {/* Stats Row with Parallax */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          style={{ y: statsY }}
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="grid grid-cols-3 gap-4 mb-16"
         >
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+              initial={{ opacity: 0, y: 50, scale: 0.9, rotateX: 15 }}
+              animate={isInView ? { opacity: 1, y: 0, scale: 1, rotateX: 0 } : {}}
+              transition={{ 
+                duration: 0.7, 
+                delay: 0.3 + index * 0.15,
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
               whileHover={{ scale: 1.05, y: -5 }}
               className="glass-card p-6 rounded-2xl text-center group cursor-default relative overflow-hidden"
+              style={{ transformPerspective: 1000 }}
             >
               {/* Glow effect on hover */}
               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -314,51 +390,74 @@ const AboutSection = () => {
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Left Column - Text */}
+          {/* Left Column - Text with Parallax & Text Reveal */}
           <motion.div
+            style={{ y: leftColumnY }}
             initial={{ opacity: 0, x: -40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
             className="space-y-6"
           >
             <p className="text-foreground/90 text-lg leading-relaxed">
-              Saya seorang <motion.span 
-                className="text-primary font-semibold inline-block"
+              <TextReveal delay={0.3} isInView={isInView}>
+                Saya seorang
+              </TextReveal>
+              <motion.span 
+                className="text-primary font-semibold inline-block mx-1"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.5, delay: 0.5 }}
                 whileHover={{ scale: 1.05 }}
-              >Fullstack Developer</motion.span> yang 
-              fokus pada kualitas, efisiensi, dan skalabilitas. Saya menggunakan pendekatan engineering 
-              untuk membuat Product Requirement Documentation dan technical documentation sebelum 
-              memulai pengembangan.
+              >
+                Fullstack Developer
+              </motion.span>
+              <TextReveal delay={0.55} isInView={isInView}>
+                yang fokus pada kualitas, efisiensi, dan skalabilitas. Saya menggunakan pendekatan engineering untuk membuat Product Requirement Documentation dan technical documentation sebelum memulai pengembangan.
+              </TextReveal>
             </p>
             
             <p className="text-muted-foreground leading-relaxed">
-              Saya merancang arsitektur sistem, workflow, dan requirement secara detail agar proses 
-              development berjalan jelas. Saya memakai AI tools seperti Copilot, tetapi tetap 
-              mengutamakan prinsip development yang kuat.
+              <TextReveal delay={0.8} isInView={isInView}>
+                Saya merancang arsitektur sistem, workflow, dan requirement secara detail agar proses development berjalan jelas. Saya memakai AI tools seperti Copilot, tetapi tetap mengutamakan prinsip development yang kuat.
+              </TextReveal>
             </p>
             
             <p className="text-muted-foreground leading-relaxed">
-              Saya membangun codebase yang bersih, modular, dan maintainable. Backend berfokus pada 
-              arsitektur efisien, keamanan API, dan performa database. Frontend berfokus pada clean 
-              code dan komponen yang reusable.
+              <TextReveal delay={1.0} isInView={isInView}>
+                Saya membangun codebase yang bersih, modular, dan maintainable. Backend berfokus pada arsitektur efisien, keamanan API, dan performa database. Frontend berfokus pada clean code dan komponen yang reusable.
+              </TextReveal>
             </p>
 
             <motion.blockquote 
-              initial={{ opacity: 0, x: -20 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.5 }}
+              initial={{ opacity: 0, x: -30, scale: 0.95 }}
+              animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
+              transition={{ duration: 0.7, delay: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="relative pl-6 py-4 italic text-foreground/80"
             >
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-primary via-primary/50 to-transparent rounded-full" />
-              <span className="text-4xl text-primary/30 absolute -top-2 left-4">&quot;</span>
-              Dokumentasi yang jelas dan struktur kode yang solid menghasilkan aplikasi yang cepat, 
-              aman, dan siap scale.
+              <motion.div 
+                initial={{ scaleY: 0 }}
+                animate={isInView ? { scaleY: 1 } : {}}
+                transition={{ duration: 0.6, delay: 1.3 }}
+                className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-primary via-primary/50 to-transparent rounded-full origin-top" 
+              />
+              <motion.span 
+                initial={{ opacity: 0, scale: 0 }}
+                animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.4, delay: 1.4 }}
+                className="text-4xl text-primary/30 absolute -top-2 left-4"
+              >
+                &quot;
+              </motion.span>
+              <TextReveal delay={1.4} isInView={isInView}>
+                Dokumentasi yang jelas dan struktur kode yang solid menghasilkan aplikasi yang cepat, aman, dan siap scale.
+              </TextReveal>
             </motion.blockquote>
           </motion.div>
 
 
-          {/* Right Column - Skills */}
+          {/* Right Column - Skills with Parallax */}
           <motion.div
+            style={{ y: rightColumnY }}
             initial={{ opacity: 0, x: 40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.4, type: "spring" }}
@@ -391,20 +490,21 @@ const AboutSection = () => {
                 />
               </div>
 
-              {/* Principles Grid */}
+              {/* Principles Grid - Cards from different directions */}
               <motion.div 
                 variants={principlesContainerVariants}
                 initial="hidden"
                 animate={isInView ? "visible" : "hidden"}
                 className="grid grid-cols-2 gap-4 relative z-10"
               >
-                {principles.map((item) => (
+                {principles.map((item, index) => (
                   <motion.div
                     key={item.title}
-                    variants={principleCardVariants}
+                    variants={createCardVariants(cardDirections[index])}
                     whileHover={{ 
                       scale: 1.05, 
                       y: -8,
+                      rotate: 0,
                       transition: { duration: 0.2 }
                     }}
                     className="relative glass-card p-5 rounded-xl overflow-hidden group cursor-default transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10"
@@ -428,19 +528,33 @@ const AboutSection = () => {
               </motion.div>
             </div>
 
-            {/* Languages */}
+            {/* Languages - Slide from right */}
             <div>
-              <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-                <div className="w-8 h-px bg-primary/50" />
+              <motion.h4 
+                initial={{ opacity: 0, x: -20 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"
+              >
+                <motion.div 
+                  initial={{ scaleX: 0 }}
+                  animate={isInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 1.0 }}
+                  className="w-8 h-px bg-primary/50 origin-left" 
+                />
                 Languages
-              </h4>
+              </motion.h4>
               <div className="flex flex-wrap gap-3">
                 {languages.map((lang, index) => (
                   <motion.span
                     key={lang}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ duration: 0.3, delay: 0.8 + index * 0.05 }}
+                    initial={{ opacity: 0, x: 30, scale: 0.8 }}
+                    animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: 1.0 + index * 0.08,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
                     whileHover={{ scale: 1.1, y: -2 }}
                     className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium border border-primary/30 cursor-default"
                   >
@@ -450,19 +564,33 @@ const AboutSection = () => {
               </div>
             </div>
 
-            {/* Tech Stack */}
+            {/* Tech Stack - Wave animation */}
             <div>
-              <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-                <div className="w-8 h-px bg-primary/50" />
+              <motion.h4 
+                initial={{ opacity: 0, x: -20 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5, delay: 1.1 }}
+                className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"
+              >
+                <motion.div 
+                  initial={{ scaleX: 0 }}
+                  animate={isInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 1.2 }}
+                  className="w-8 h-px bg-primary/50 origin-left" 
+                />
                 Tech Stack
-              </h4>
+              </motion.h4>
               <div className="flex flex-wrap gap-2">
                 {techStack.map((tech, index) => (
                   <motion.span
                     key={tech}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ duration: 0.3, delay: 1 + index * 0.03 }}
+                    initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                    animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
+                    transition={{ 
+                      duration: 0.4, 
+                      delay: 1.2 + index * 0.04,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
                     whileHover={{ 
                       scale: 1.1, 
                       y: -2,
