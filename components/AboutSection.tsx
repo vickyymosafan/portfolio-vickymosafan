@@ -1,8 +1,36 @@
 "use client";
 
 import { motion, useInView, useScroll, useTransform, animate } from 'framer-motion';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Code2, Database, GitBranch, Layout, Zap, Shield } from 'lucide-react';
+
+// Floating Particle Component
+const FloatingParticle = ({ 
+  x, y, size, duration, delay 
+}: { 
+  x: number; y: number; size: number; duration: number; delay: number 
+}) => (
+  <motion.div
+    className="absolute rounded-full bg-primary/20"
+    style={{
+      left: `${x}%`,
+      top: `${y}%`,
+      width: size,
+      height: size,
+    }}
+    animate={{
+      y: [0, -30, 0],
+      opacity: [0.2, 0.5, 0.2],
+      scale: [1, 1.2, 1],
+    }}
+    transition={{
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+  />
+);
 
 // Animated Counter Component with its own inView detection
 const AnimatedCounter = ({ 
@@ -95,16 +123,118 @@ const AboutSection = () => {
   });
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const orbScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 1]);
+
+  // Predefined particle positions for consistent rendering
+  const particles = useMemo(() => [
+    { id: 0, x: 15, y: 20, size: 3, duration: 15, delay: 0 },
+    { id: 1, x: 85, y: 15, size: 4, duration: 18, delay: 2 },
+    { id: 2, x: 45, y: 80, size: 2, duration: 12, delay: 1 },
+    { id: 3, x: 70, y: 45, size: 3, duration: 20, delay: 3 },
+    { id: 4, x: 25, y: 65, size: 4, duration: 16, delay: 0.5 },
+    { id: 5, x: 90, y: 70, size: 2, duration: 14, delay: 2.5 },
+    { id: 6, x: 10, y: 85, size: 3, duration: 17, delay: 1.5 },
+    { id: 7, x: 55, y: 30, size: 4, duration: 19, delay: 4 },
+    { id: 8, x: 35, y: 50, size: 2, duration: 13, delay: 0.8 },
+    { id: 9, x: 75, y: 90, size: 3, duration: 15, delay: 3.5 },
+    { id: 10, x: 5, y: 40, size: 4, duration: 18, delay: 1.2 },
+    { id: 11, x: 60, y: 10, size: 2, duration: 16, delay: 2.8 },
+    { id: 12, x: 40, y: 95, size: 3, duration: 14, delay: 4.5 },
+    { id: 13, x: 95, y: 55, size: 4, duration: 20, delay: 0.3 },
+    { id: 14, x: 20, y: 35, size: 2, duration: 12, delay: 3.2 },
+  ], []);
 
   return (
     <section id="about" className="section-padding bg-background relative overflow-hidden" ref={containerRef}>
-      {/* Animated Background */}
+      {/* Grid Pattern Background */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px),
+            linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      {/* Noise Texture Overlay */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.015]">
+        <filter id="noiseFilter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+      </svg>
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {particles.map((particle) => (
+          <FloatingParticle key={particle.id} {...particle} />
+        ))}
+      </div>
+
+      {/* Animated Gradient Orbs */}
       <motion.div 
         style={{ y: backgroundY }}
-        className="absolute inset-0 opacity-30 pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
       >
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        {/* Primary Orb - Top Left */}
+        <motion.div 
+          style={{ scale: orbScale }}
+          className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, 20, 0],
+            y: [0, -15, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        
+        {/* Accent Orb - Bottom Right */}
+        <motion.div 
+          style={{ scale: orbScale }}
+          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, -25, 0],
+            y: [0, 20, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Secondary Orb - Center */}
+        <motion.div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Small Accent Orb - Top Right */}
+        <motion.div 
+          className="absolute top-40 right-1/4 w-48 h-48 bg-cyan-500/5 rounded-full blur-2xl"
+          animate={{
+            x: [0, 15, 0],
+            y: [0, 10, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
       </motion.div>
 
       <div className="max-w-6xl mx-auto relative" ref={ref}>
