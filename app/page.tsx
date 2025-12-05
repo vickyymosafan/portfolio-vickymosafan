@@ -1,5 +1,6 @@
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
+import TransitionSection from '@/components/TransitionSection';
 import AboutSection from '@/components/AboutSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import CoolingSection from '@/components/CoolingSection';
@@ -10,6 +11,7 @@ export default function Home() {
     <main className="relative">
       <Navigation />
       <HeroSection />
+      <TransitionSection />
       <AboutSection />
       <ExperienceSection />
       <CoolingSection />

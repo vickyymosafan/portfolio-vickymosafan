@@ -69,7 +69,7 @@ const AboutSection = () => {
             initial={{ scaleX: 0 }}
             animate={isInView ? { scaleX: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full mx-auto"
+            className="w-24 h-1 bg-linear-to-r from-transparent via-primary to-transparent rounded-full mx-auto"
           />
         </motion.div>
 
@@ -132,7 +132,7 @@ const AboutSection = () => {
               transition={{ duration: 0.6, delay: 0.5 }}
               className="relative pl-6 py-4 italic text-foreground/80"
             >
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/50 to-transparent rounded-full" />
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-primary via-primary/50 to-transparent rounded-full" />
               <span className="text-4xl text-primary/30 absolute -top-2 left-4">&quot;</span>
               Dokumentasi yang jelas dan struktur kode yang solid menghasilkan aplikasi yang cepat, 
               aman, dan siap scale.
@@ -159,7 +159,7 @@ const AboutSection = () => {
                   className={`relative glass-card p-5 rounded-xl overflow-hidden group cursor-default`}
                 >
                   {/* Gradient background on hover */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div className={`absolute inset-0 bg-linear-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   <div className="relative z-10">
                     <div className="p-2 bg-primary/10 rounded-lg w-fit mb-3 group-hover:bg-primary/20 transition-colors">
                       <item.icon className="w-5 h-5 text-primary" />
