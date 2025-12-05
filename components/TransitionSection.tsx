@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import { useEffect, useState, useRef, useSyncExternalStore } from 'react';
 import ImageSequenceCanvas from './ImageSequenceCanvas';
 
@@ -30,6 +30,7 @@ const useIsMounted = () => {
 const TransitionSection = () => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [blurValue, setBlurValue] = useState(6); // Initial blur
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollY } = useScroll();
   const isMounted = useIsMounted();
@@ -40,17 +41,42 @@ const TransitionSection = () => {
   const sectionStart = windowSize.height * 1;
   const sectionEnd = windowSize.height * 2.5;
 
-  // Transform values for animations
+  // ============================================================================
+  // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp during scroll
+  // ============================================================================
+  const backgroundBlurValue = useTransform(
+    scrollY,
+    [sectionStart, sectionStart + windowSize.height * 0.5],
+    [6, 0]
+  );
+  
+  // Update blur state based on scroll
+  useMotionValueEvent(backgroundBlurValue, "change", (latest) => {
+    setBlurValue(Math.max(0, latest));
+  });
+  // ============================================================================
+
+  // Transform values for animations - Content fades in then fades out
   const contentOpacity = useTransform(
     scrollY,
-    [sectionStart + windowSize.height * 0.5, sectionEnd - windowSize.height * 0.3],
-    [0, 1]
+    [
+      sectionStart + windowSize.height * 0.3,  // Start fade in
+      sectionStart + windowSize.height * 0.6,  // Fully visible
+      sectionEnd - windowSize.height * 0.4,    // Start fade out
+      sectionEnd - windowSize.height * 0.1     // Fully hidden
+    ],
+    [0, 1, 1, 0]
   );
 
   const contentY = useTransform(
     scrollY,
-    [sectionStart + windowSize.height * 0.5, sectionEnd - windowSize.height * 0.3],
-    [50, 0]
+    [
+      sectionStart + windowSize.height * 0.3,
+      sectionStart + windowSize.height * 0.6,
+      sectionEnd - windowSize.height * 0.4,
+      sectionEnd - windowSize.height * 0.1
+    ],
+    [50, 0, 0, -30]
   );
 
   // Gradient overlay opacity - fades in towards the end
@@ -94,42 +120,48 @@ const TransitionSection = () => {
     <section ref={sectionRef} className="relative h-[150vh]">
       {/* Fixed Canvas Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background">
-        {/* Option 1: Image Sequence Animation (when you have multiple frames) */}
-        {USE_IMAGE_SEQUENCE && windowSize.height > 0 && (
-          <motion.div 
-            style={{ scale: scaleValue }}
-            className="absolute inset-0 origin-center"
-          >
-            <ImageSequenceCanvas
-              baseUrl={MACRO_BASE_URL}
-              totalFrames={MACRO_TOTAL_FRAMES}
-              scrollStart={sectionStart}
-              scrollEnd={sectionEnd}
-              className="absolute inset-0"
-            />
-          </motion.div>
-        )}
+        {/* Background with cinematic blur effect */}
+        <div 
+          className="absolute inset-0 transition-[filter] duration-100"
+          style={{ filter: `blur(${blurValue}px)` }}
+        >
+          {/* Option 1: Image Sequence Animation (when you have multiple frames) */}
+          {USE_IMAGE_SEQUENCE && windowSize.height > 0 && (
+            <motion.div 
+              style={{ scale: scaleValue }}
+              className="absolute inset-0 origin-center"
+            >
+              <ImageSequenceCanvas
+                baseUrl={MACRO_BASE_URL}
+                totalFrames={MACRO_TOTAL_FRAMES}
+                scrollStart={sectionStart}
+                scrollEnd={sectionEnd}
+                className="absolute inset-0"
+              />
+            </motion.div>
+          )}
 
-        {/* Option 2: Single Frame with CSS Scale Transform for Zoom-Out Effect */}
-        {!USE_IMAGE_SEQUENCE && (
-          <motion.div 
-            style={{ 
-              scale: scaleValue,
-              opacity: imageOpacity,
-            }}
-            className="absolute inset-0 origin-center"
-          >
-            <motion.img
-              src={MACRO_BASE_URL}
-              alt="Transition macro shot"
-              className="w-full h-full object-cover"
-              style={{
-                opacity: imageLoaded ? 1 : 0,
-                transition: 'opacity 0.5s ease'
+          {/* Option 2: Single Frame with CSS Scale Transform for Zoom-Out Effect */}
+          {!USE_IMAGE_SEQUENCE && (
+            <motion.div 
+              style={{ 
+                scale: scaleValue,
+                opacity: imageOpacity,
               }}
-            />
-          </motion.div>
-        )}
+              className="absolute inset-0 origin-center"
+            >
+              <motion.img
+                src={MACRO_BASE_URL}
+                alt="Transition macro shot"
+                className="w-full h-full object-cover"
+                style={{
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: 'opacity 0.5s ease'
+                }}
+              />
+            </motion.div>
+          )}
+        </div>
 
         {/* Cinematic Overlay */}
         <div className="absolute inset-0 cinematic-overlay" />
