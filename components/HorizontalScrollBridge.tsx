@@ -87,6 +87,8 @@ const HorizontalScrollBridge = () => {
 
   // Progress indicator
   const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  
+  // Transition gradient opacity - fades in as approaching end
 
   return (
     <section 
@@ -179,6 +181,10 @@ const HorizontalScrollBridge = () => {
                 style={{ opacity, scale }}
                 className="w-screen h-full flex items-center justify-center relative"
               >
+                {/* Bottom gradient for last panel - smooth transition to ExperienceSection */}
+                {panel.isLast && (
+                  <div className="absolute bottom-0 left-0 right-0 h-48 bg-linear-to-t from-secondary/20 via-secondary/10 to-transparent pointer-events-none" />
+                )}
 
                 {/* Content */}
                 <div className="relative z-10 text-center px-8 max-w-4xl">
