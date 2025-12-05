@@ -24,15 +24,39 @@ const HeroSection = () => {
   const fullText = 'Fullstack Developer';
   const { scrollY } = useScroll();
   
-  // Content transforms
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const scale = useTransform(scrollY, [0, 300], [1, 0.95]);
-  const y = useTransform(scrollY, [0, 300], [0, 50]);
+  // ============================================================================
+  // LINEAR SMOOTH SCROLLING - Content stays visible longer, then fades out smoothly
+  // ============================================================================
+  // Content opacity - stays visible, then fades out towards end of section
+  const opacity = useTransform(
+    scrollY,
+    [0, windowSize.height * 0.1, windowSize.height * 0.4, windowSize.height * 0.7],
+    [1, 1, 1, 0]
+  );
+  
+  // Content scale - stays normal, then scales down slightly
+  const scale = useTransform(
+    scrollY,
+    [0, windowSize.height * 0.4, windowSize.height * 0.7],
+    [1, 1, 0.95]
+  );
+  
+  // Content Y position - stays in place, then moves up
+  const y = useTransform(
+    scrollY,
+    [0, windowSize.height * 0.4, windowSize.height * 0.7],
+    [0, 0, -50]
+  );
+  // ============================================================================
 
   // ============================================================================
   // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp as text fades
   // ============================================================================
-  const backgroundBlurValue = useTransform(scrollY, [0, 300], [8, 0]);
+  const backgroundBlurValue = useTransform(
+    scrollY, 
+    [0, windowSize.height * 0.4], 
+    [8, 0]
+  );
   
   // Update blur state based on scroll
   useMotionValueEvent(backgroundBlurValue, "change", (latest) => {

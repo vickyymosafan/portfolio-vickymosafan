@@ -31,15 +31,36 @@ const TransitionSection = () => {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
   const [blurValue, setBlurValue] = useState(6); // Initial blur
+  const [bgOpacity, setBgOpacity] = useState(0); // Initial background opacity
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollY } = useScroll();
   const isMounted = useIsMounted();
 
-  // Calculate scroll positions based on window height
-  // Start animation earlier - when TransitionSection begins to appear
-  // HeroSection is 200vh, animation starts at ~100vh scroll (when section starts appearing)
-  const sectionStart = windowSize.height * 1;
-  const sectionEnd = windowSize.height * 2.5;
+  // ============================================================================
+  // SCROLL POSITIONS - Start when section preview appears at bottom of viewport
+  // HeroSection is 200vh with sticky, TransitionSection starts appearing around 100vh
+  // ============================================================================
+  const sectionStart = windowSize.height * 1;    // 100vh - when TransitionSection preview appears
+  const sectionEnd = windowSize.height * 3;      // 300vh - before AboutSection
+
+  // ============================================================================
+  // LINEAR BACKGROUND OPACITY - Fade in smooth at start, fade out at end
+  // ============================================================================
+  const backgroundOpacity = useTransform(
+    scrollY,
+    [
+      sectionStart - windowSize.height * 0.2,  // Start fade in before section fully visible
+      sectionStart + windowSize.height * 0.1,  // Fully visible
+      sectionEnd - windowSize.height * 0.3,    // Start fade out
+      sectionEnd                                // Fully hidden
+    ],
+    [0, 1, 1, 0]
+  );
+
+  // Update background opacity state based on scroll
+  useMotionValueEvent(backgroundOpacity, "change", (latest) => {
+    setBgOpacity(Math.max(0, Math.min(1, latest)));
+  });
 
   // ============================================================================
   // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp during scroll
@@ -56,7 +77,9 @@ const TransitionSection = () => {
   });
   // ============================================================================
 
-  // Transform values for animations - Content fades in then fades out
+  // ============================================================================
+  // CONTENT - Multi-keyframe linear animation (like HeroSection)
+  // ============================================================================
   const contentOpacity = useTransform(
     scrollY,
     [
@@ -86,14 +109,16 @@ const TransitionSection = () => {
     [0, 1]
   );
 
-  // Scale effect for zoom-out feel - starts zoomed in (macro), zooms out to reveal context
+  // ============================================================================
+  // SCALE - Linear zoom-out effect
+  // ============================================================================
   const scaleValue = useTransform(
     scrollY,
     [sectionStart, sectionEnd],
     [2.0, 1] // Start at 2x zoom (macro feel), end at normal
   );
 
-  // Image opacity - fade in from Hero
+  // Image opacity - fade in from Hero (for single frame mode)
   const imageOpacity = useTransform(
     scrollY,
     [sectionStart - windowSize.height * 0.2, sectionStart + windowSize.height * 0.1],
@@ -120,10 +145,13 @@ const TransitionSection = () => {
     <section ref={sectionRef} className="relative h-[150vh]">
       {/* Fixed Canvas Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background">
-        {/* Background with cinematic blur effect */}
+        {/* Background with cinematic blur effect and linear opacity */}
         <div 
           className="absolute inset-0 transition-[filter] duration-100"
-          style={{ filter: `blur(${blurValue}px)` }}
+          style={{ 
+            filter: `blur(${blurValue}px)`,
+            opacity: bgOpacity // Linear fade in/out for background
+          }}
         >
           {/* Option 1: Image Sequence Animation (when you have multiple frames) */}
           {USE_IMAGE_SEQUENCE && windowSize.height > 0 && (
