@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 Cinematic Scroll Portfolio
 
-## Getting Started
+Portfolio website modern dengan efek scroll cinematic yang terinspirasi dari Apple, dibangun menggunakan Next.js 16 dan Framer Motion.
 
-First, run the development server:
+## ✨ Fitur Utama
+
+- **Cinematic Scroll Effects** - Animasi parallax dan blur yang smooth saat scroll
+- **Image Sequence Animation** - Efek frame-by-frame berbasis canvas seperti Apple
+- **Typing Animation** - Efek mengetik pada hero section
+- **Floating Particles** - Partikel animasi yang mengambang
+- **Glass Morphism UI** - Desain modern dengan efek kaca
+- **Horizontal Scroll Bridge** - Transisi horizontal yang unik
+- **Fully Responsive** - Tampilan optimal di semua perangkat
+- **Smooth Navigation** - Navigasi dengan scroll halus
+
+## 🛠️ Tech Stack
+
+| Teknologi     | Versi  |
+| ------------- | ------ |
+| Next.js       | 16.0.7 |
+| React         | 19.2.0 |
+| Framer Motion | 12.x   |
+| Tailwind CSS  | 4.x    |
+| TypeScript    | 5.x    |
+| Radix UI      | Latest |
+| Lucide Icons  | Latest |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm / yarn / pnpm / bun
+
+### Installation
 
 ```bash
+# Clone repository
+git clone <repository-url>
+cd cinematic-scroll-portfolio
+
+# Install dependencies
+npm install
+
+# Jalankan development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## 📁 Struktur Proyek
 
-To learn more about Next.js, take a look at the following resources:
+```
+cinematic-scroll-portfolio/
+├── app/
+│   ├── layout.tsx          # Root layout
+│   ├── page.tsx            # Halaman utama
+│   └── globals.css         # Global styles
+├── components/
+│   ├── Navigation.tsx      # Navigasi
+│   ├── HeroSection.tsx     # Hero dengan image sequence
+│   ├── TransitionSection.tsx
+│   ├── AboutSection.tsx    # Tentang saya
+│   ├── HorizontalScrollBridge.tsx
+│   ├── ExperienceSection.tsx # Pengalaman kerja
+│   ├── CoolingSection.tsx
+│   ├── ContactSection.tsx  # Form kontak
+│   ├── ImageSequenceCanvas.tsx # Canvas animation
+│   └── ui/                 # UI components
+├── hooks/
+│   └── use-toast.ts        # Toast notification hook
+├── lib/
+│   └── utils.ts            # Utility functions
+└── public/                 # Static assets
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Kustomisasi
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Mengubah Informasi Personal
 
-## Deploy on Vercel
+Edit `components/HeroSection.tsx` untuk mengubah nama dan title:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```tsx
+const fullText = "Your Title Here";
+// ...
+<span className="text-gradient">Your Name</span>;
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Mengubah Image Sequence
+
+Ganti URL di `ImageSequenceCanvas` component dengan URL gambar sequence Anda sendiri.
+
+### Mengubah Warna Tema
+
+Edit variabel CSS di `app/globals.css` untuk menyesuaikan color scheme.
+
+## 📝 Scripts
+
+| Command         | Deskripsi                   |
+| --------------- | --------------------------- |
+| `npm run dev`   | Jalankan development server |
+| `npm run build` | Build untuk production      |
+| `npm start`     | Jalankan production server  |
+| `npm run lint`  | Jalankan ESLint             |
+
+## 👤 Author
+
+**Vicky Mosafan**  
+Fullstack Developer
+
+## 📄 License
+
+MIT License - Silakan gunakan dan modifikasi sesuai kebutuhan.
+
+---
+
+⭐ Jika proyek ini membantu, berikan star di repository!
