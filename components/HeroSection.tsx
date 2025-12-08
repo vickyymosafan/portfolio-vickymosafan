@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-mot
 import { ChevronDown, Sparkles } from 'lucide-react';
 import ImageSequenceCanvas from './ImageSequenceCanvas';
 import { useEffect, useState } from 'react';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 
 // Generate deterministic positions based on index
 const getParticlePosition = (index: number, width: number, height: number) => {
@@ -24,38 +25,50 @@ const HeroSection = () => {
   const [bgOpacity, setBgOpacity] = useState(1); // Initial background opacity
   const fullText = 'Fullstack Developer';
   const { scrollY } = useScroll();
+
+  // ============================================================================
+  // AUTO-SCROLL - Smooth cinematic scroll through all 191 frames
+  // ============================================================================
+  const sectionHeight = windowSize.height * 1.5; // 150vh section
+  useAutoScroll({
+    targetScroll: sectionHeight,
+    duration: 3000, // 3 seconds for smooth 191 frame playback
+    enabled: isMounted && windowSize.height > 0,
+  });
+  // ============================================================================
   
   // ============================================================================
   // LINEAR SMOOTH SCROLLING - Content stays visible longer, then fades out smoothly
+  // Adjusted for 150vh section with auto-scroll
   // ============================================================================
   // Content opacity - stays visible, then fades out towards end of section
   const opacity = useTransform(
     scrollY,
-    [0, windowSize.height * 0.1, windowSize.height * 0.4, windowSize.height * 0.7],
+    [0, sectionHeight * 0.1, sectionHeight * 0.5, sectionHeight * 0.8],
     [1, 1, 1, 0]
   );
   
   // Content scale - stays normal, then scales down slightly
   const scale = useTransform(
     scrollY,
-    [0, windowSize.height * 0.4, windowSize.height * 0.7],
+    [0, sectionHeight * 0.5, sectionHeight * 0.8],
     [1, 1, 0.95]
   );
   
   // Content Y position - stays in place, then moves up
   const y = useTransform(
     scrollY,
-    [0, windowSize.height * 0.4, windowSize.height * 0.7],
+    [0, sectionHeight * 0.5, sectionHeight * 0.8],
     [0, 0, -50]
   );
   // ============================================================================
 
   // ============================================================================
-  // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp as text fades
+  // CINEMATIC BLUR EFFECT - Background starts blurred, becomes sharp during scroll
   // ============================================================================
   const backgroundBlurValue = useTransform(
     scrollY, 
-    [0, windowSize.height * 0.4], 
+    [0, sectionHeight * 0.4], 
     [8, 0]
   );
   
@@ -65,12 +78,12 @@ const HeroSection = () => {
   });
 
   // ============================================================================
-  // BACKGROUND OPACITY - Fade out earlier for smooth cross-fade to TransitionSection
+  // BACKGROUND OPACITY - Fade out for smooth cross-fade to TransitionSection
   // ============================================================================
   const backgroundOpacity = useTransform(
     scrollY,
-    [0, windowSize.height * 0.5, windowSize.height * 0.8],
-    [1, 1, 0]  // Stay visible, then fade out for cross-fade overlap (0.5vh → 0.8vh)
+    [0, sectionHeight * 0.6, sectionHeight * 0.9],
+    [1, 1, 0]  // Stay visible, then fade out for cross-fade overlap
   );
 
   // Update background opacity state based on scroll
@@ -121,7 +134,7 @@ const HeroSection = () => {
             baseUrl="https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/impact/frame_000_delay-0.04s.webp"
             totalFrames={191}
             scrollStart={0}
-            scrollEnd={windowSize.height}
+            scrollEnd={sectionHeight}
             className="absolute inset-0"
           />
         </div>
