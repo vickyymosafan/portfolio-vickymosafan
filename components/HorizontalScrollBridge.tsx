@@ -1,9 +1,18 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import { ArrowDown, Briefcase, Code2, Rocket, Sparkles } from 'lucide-react';
 import { useGSAP, gsap, ScrollTrigger } from '@/hooks/use-gsap';
+
+// SSR-safe mount detection hook
+const useIsMounted = () => {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+};
 
 const panels = [
   {
@@ -52,13 +61,7 @@ const HorizontalScrollBridge = () => {
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [activePanel, setActivePanel] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Use layout effect pattern for mount detection
-  if (typeof window !== 'undefined' && !isMounted) {
-    // This runs synchronously during render on client
-    Promise.resolve().then(() => setIsMounted(true));
-  }
+  const isMounted = useIsMounted();
 
 
   // ============================================================================
