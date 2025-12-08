@@ -3,6 +3,7 @@
 import { motion, useInView, useScroll, useTransform, animate } from 'framer-motion';
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { Code2, Database, GitBranch, Layout, Zap, Shield } from 'lucide-react';
+import { useGSAP, gsap } from '@/hooks/use-gsap';
 
 // Floating Particle Component
 const FloatingParticle = ({ 
@@ -12,40 +13,19 @@ const FloatingParticle = ({
 }) => (
   <motion.div
     className="absolute rounded-full bg-primary/20"
-    style={{
-      left: `${x}%`,
-      top: `${y}%`,
-      width: size,
-      height: size,
-    }}
-    animate={{
-      y: [0, -30, 0],
-      opacity: [0.2, 0.5, 0.2],
-      scale: [1, 1.2, 1],
-    }}
-    transition={{
-      duration,
-      delay,
-      repeat: Infinity,
-      ease: "easeInOut",
-    }}
+    style={{ left: `${x}%`, top: `${y}%`, width: size, height: size }}
+    animate={{ y: [0, -30, 0], opacity: [0.2, 0.5, 0.2], scale: [1, 1.2, 1] }}
+    transition={{ duration, delay, repeat: Infinity, ease: "easeInOut" }}
   />
 );
 
 // Text Reveal Animation Component (word by word)
 const TextReveal = ({ 
-  children, 
-  className = '', 
-  delay = 0,
-  isInView 
+  children, className = '', delay = 0, isInView 
 }: { 
-  children: string; 
-  className?: string; 
-  delay?: number;
-  isInView: boolean;
+  children: string; className?: string; delay?: number; isInView: boolean;
 }) => {
   const words = children.split(' ');
-  
   return (
     <span className={className}>
       {words.map((word, i) => (
@@ -53,11 +33,7 @@ const TextReveal = ({
           key={i}
           initial={{ opacity: 0, y: 15, filter: 'blur(4px)' }}
           animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-          transition={{ 
-            duration: 0.4, 
-            delay: delay + i * 0.025,
-            ease: [0.25, 0.46, 0.45, 0.94]
-          }}
+          transition={{ duration: 0.4, delay: delay + i * 0.025, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="inline-block mr-[0.25em]"
         >
           {word}
@@ -67,24 +43,8 @@ const TextReveal = ({
   );
 };
 
-// Card slide directions for principles (from different corners)
-const cardDirections = [
-  { x: -40, y: -25, rotate: -5 },   // top-left
-  { x: 40, y: -25, rotate: 5 },    // top-right
-  { x: -40, y: 25, rotate: 5 },    // bottom-left
-  { x: 40, y: 25, rotate: -5 },    // bottom-right
-];
-
-// Animated Counter Component with its own inView detection
-const AnimatedCounter = ({ 
-  value, 
-  suffix = '', 
-  duration = 2,
-}: { 
-  value: number; 
-  suffix?: string; 
-  duration?: number;
-}) => {
+// Animated Counter Component
+const AnimatedCounter = ({ value, suffix = '', duration = 2 }: { value: number; suffix?: string; duration?: number }) => {
   const [displayValue, setDisplayValue] = useState(0);
   const counterRef = useRef<HTMLSpanElement>(null);
   const hasAnimated = useRef(false);
@@ -93,27 +53,21 @@ const AnimatedCounter = ({
   useEffect(() => {
     if (isInView && !hasAnimated.current) {
       hasAnimated.current = true;
-      
-      // Small delay to ensure smooth start
       const timeout = setTimeout(() => {
         const controls = animate(0, value, {
           duration,
-          ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smooth animation
-          onUpdate: (latest) => {
-            setDisplayValue(Math.round(latest));
-          }
+          ease: [0.25, 0.46, 0.45, 0.94],
+          onUpdate: (latest) => setDisplayValue(Math.round(latest)),
         });
         return () => controls.stop();
       }, 100);
-      
       return () => clearTimeout(timeout);
     }
   }, [isInView, value, duration]);
 
-  return (
-    <span ref={counterRef}>{displayValue}{suffix}</span>
-  );
+  return <span ref={counterRef}>{displayValue}{suffix}</span>;
 };
+
 
 const languages = ['HTML', 'CSS', 'JavaScript', 'TypeScript'];
 
@@ -129,49 +83,29 @@ const principles = [
   { icon: Database, title: 'Scalable', desc: 'Ready for growth', color: 'from-orange-500/20 to-yellow-500/20', iconGradient: 'from-orange-500/40 to-yellow-500/40' },
 ];
 
-// Animation variants for staggered reveal
-const principlesContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.1
-    }
-  }
-};
-
-// Dynamic card variants based on direction
-const createCardVariants = (direction: { x: number; y: number; rotate: number }) => ({
-  hidden: { 
-    opacity: 0, 
-    x: direction.x, 
-    y: direction.y, 
-    scale: 0.9,
-    rotate: direction.rotate
-  },
-  visible: { 
-    opacity: 1, 
-    x: 0,
-    y: 0, 
-    scale: 1,
-    rotate: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.46, 0.45, 0.94] as const
-    }
-  }
-});
-
 const stats = [
   { value: 2, suffix: '+', label: 'Years Experience', icon: Zap },
   { value: 10, suffix: '+', label: 'Projects Done', icon: Code2 },
   { value: 100, suffix: '%', label: 'Code Quality', icon: Shield },
 ];
 
+// Card directions for 3D effect
+const cardDirections = [
+  { x: -40, y: -25, rotateY: -15, rotateX: 10 },
+  { x: 40, y: -25, rotateY: 15, rotateX: 10 },
+  { x: -40, y: 25, rotateY: -15, rotateX: -10 },
+  { x: 40, y: 25, rotateY: 15, rotateX: -10 },
+];
+
 const AboutSection = () => {
   const ref = useRef(null);
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const principlesRef = useRef<HTMLDivElement>(null);
+  const techStackRef = useRef<HTMLDivElement>(null);
+  const languagesRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -180,17 +114,178 @@ const AboutSection = () => {
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const orbScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 1]);
-  
-  // Top gradient overlay - fades out as user scrolls into section
   const topGradientOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  
-  // Parallax transforms for different elements
   const statsY = useTransform(scrollYProgress, [0, 1], [60, -40]);
   const leftColumnY = useTransform(scrollYProgress, [0, 1], [40, -30]);
   const rightColumnY = useTransform(scrollYProgress, [0, 1], [50, -35]);
   const headerY = useTransform(scrollYProgress, [0, 1], [30, -20]);
 
-  // Predefined particle positions for consistent rendering
+  // ============================================================================
+  // GSAP SCROLL-TRIGGERED ANIMATIONS
+  // ============================================================================
+  useGSAP(() => {
+    if (!containerRef.current) return;
+
+    // Header reveal with scrub
+    if (headerRef.current) {
+      gsap.fromTo(headerRef.current,
+        { opacity: 0, y: 60, scale: 0.95 },
+        {
+          opacity: 1, y: 0, scale: 1,
+          scrollTrigger: {
+            trigger: headerRef.current,
+            start: 'top 85%',
+            end: 'top 60%',
+            scrub: 1,
+          }
+        }
+      );
+    }
+
+    // Stats cards with 3D flip effect
+    if (statsRef.current) {
+      const statCards = statsRef.current.querySelectorAll('.stat-card');
+      statCards.forEach((card) => {
+        gsap.fromTo(card,
+          { 
+            opacity: 0, 
+            y: 80, 
+            rotateX: 45,
+            scale: 0.8,
+            transformPerspective: 1000
+          },
+          {
+            opacity: 1, 
+            y: 0, 
+            rotateX: 0,
+            scale: 1,
+            duration: 0.8,
+            ease: 'back.out(1.4)',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+              end: 'top 65%',
+              scrub: 0.5,
+            }
+          }
+        );
+      });
+    }
+
+    // Principles cards with 3D perspective from corners
+    if (principlesRef.current) {
+      const principleCards = principlesRef.current.querySelectorAll('.principle-card');
+      principleCards.forEach((card, idx) => {
+        const dir = cardDirections[idx];
+        gsap.fromTo(card,
+          { 
+            opacity: 0, 
+            x: dir.x, 
+            y: dir.y,
+            rotateY: dir.rotateY,
+            rotateX: dir.rotateX,
+            scale: 0.85,
+            transformPerspective: 1200
+          },
+          {
+            opacity: 1, 
+            x: 0, 
+            y: 0,
+            rotateY: 0,
+            rotateX: 0,
+            scale: 1,
+            duration: 0.7,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: principlesRef.current,
+              start: 'top 80%',
+              end: 'top 50%',
+              scrub: 1,
+            }
+          }
+        );
+      });
+
+      // Connecting lines animation
+      const lines = principlesRef.current.querySelectorAll('.connecting-line');
+      lines.forEach((line, i) => {
+        gsap.fromTo(line,
+          { scaleX: 0, scaleY: 0, opacity: 0 },
+          {
+            scaleX: 1, scaleY: 1, opacity: 1,
+            duration: 0.6,
+            delay: i * 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: principlesRef.current,
+              start: 'top 70%',
+              toggleActions: 'play none none reverse'
+            }
+          }
+        );
+      });
+    }
+
+    // Tech stack batch animation with wave effect
+    if (techStackRef.current) {
+      const techTags = techStackRef.current.querySelectorAll('.tech-tag');
+      gsap.fromTo(techTags,
+        { 
+          opacity: 0, 
+          y: 30, 
+          scale: 0.7,
+          rotateZ: -5
+        },
+        {
+          opacity: 1, 
+          y: 0, 
+          scale: 1,
+          rotateZ: 0,
+          stagger: {
+            each: 0.05,
+            from: 'start',
+            ease: 'power2.out'
+          },
+          duration: 0.5,
+          ease: 'back.out(1.2)',
+          scrollTrigger: {
+            trigger: techStackRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+    }
+
+    // Languages with elastic effect
+    if (languagesRef.current) {
+      const langTags = languagesRef.current.querySelectorAll('.lang-tag');
+      gsap.fromTo(langTags,
+        { 
+          opacity: 0, 
+          x: 50, 
+          scale: 0.5
+        },
+        {
+          opacity: 1, 
+          x: 0, 
+          scale: 1,
+          stagger: 0.1,
+          duration: 0.6,
+          ease: 'elastic.out(1, 0.5)',
+          scrollTrigger: {
+            trigger: languagesRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+    }
+
+  }, []);
+
+
+  // Predefined particle positions
   const particles = useMemo(() => [
     { id: 0, x: 15, y: 20, size: 3, duration: 15, delay: 0 },
     { id: 1, x: 85, y: 15, size: 4, duration: 18, delay: 2 },
@@ -200,13 +295,6 @@ const AboutSection = () => {
     { id: 5, x: 90, y: 70, size: 2, duration: 14, delay: 2.5 },
     { id: 6, x: 10, y: 85, size: 3, duration: 17, delay: 1.5 },
     { id: 7, x: 55, y: 30, size: 4, duration: 19, delay: 4 },
-    { id: 8, x: 35, y: 50, size: 2, duration: 13, delay: 0.8 },
-    { id: 9, x: 75, y: 90, size: 3, duration: 15, delay: 3.5 },
-    { id: 10, x: 5, y: 40, size: 4, duration: 18, delay: 1.2 },
-    { id: 11, x: 60, y: 10, size: 2, duration: 16, delay: 2.8 },
-    { id: 12, x: 40, y: 95, size: 3, duration: 14, delay: 4.5 },
-    { id: 13, x: 95, y: 55, size: 4, duration: 20, delay: 0.3 },
-    { id: 14, x: 20, y: 35, size: 2, duration: 12, delay: 3.2 },
   ], []);
 
   return (
@@ -215,15 +303,12 @@ const AboutSection = () => {
       <div 
         className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
-          backgroundImage: `
-            linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px),
-            linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)
-          `,
+          backgroundImage: `linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
         }}
       />
 
-      {/* Noise Texture Overlay */}
+      {/* Noise Texture */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.015]">
         <filter id="noiseFilter">
           <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
@@ -231,7 +316,7 @@ const AboutSection = () => {
         <rect width="100%" height="100%" filter="url(#noiseFilter)" />
       </svg>
 
-      {/* Top Gradient Overlay - Smooth transition from TransitionSection */}
+      {/* Top Gradient Overlay */}
       <motion.div 
         style={{ opacity: topGradientOpacity }}
         className="absolute inset-x-0 top-0 h-[40vh] bg-linear-to-b from-background via-background/50 to-transparent pointer-events-none z-10"
@@ -245,161 +330,68 @@ const AboutSection = () => {
       </div>
 
       {/* Animated Gradient Orbs */}
-      <motion.div 
-        style={{ y: backgroundY }}
-        className="absolute inset-0 pointer-events-none"
-      >
-        {/* Primary Orb - Top Left */}
+      <motion.div style={{ y: backgroundY }} className="absolute inset-0 pointer-events-none">
         <motion.div 
           style={{ scale: orbScale }}
           className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, 20, 0],
-            y: [0, -15, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
-        
-        {/* Accent Orb - Bottom Right */}
         <motion.div 
           style={{ scale: orbScale }}
           className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, -25, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ x: [0, -25, 0], y: [0, 20, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
         />
-
-        {/* Secondary Orb - Center */}
         <motion.div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        {/* Small Accent Orb - Top Right */}
-        <motion.div 
-          className="absolute top-40 right-1/4 w-48 h-48 bg-cyan-500/5 rounded-full blur-2xl"
-          animate={{
-            x: [0, 15, 0],
-            y: [0, 10, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
 
       <div className="max-w-6xl mx-auto relative" ref={ref}>
-        {/* Section Header with Parallax */}
+        {/* Section Header */}
         <motion.div
+          ref={headerRef}
           style={{ y: headerY }}
-          initial={{ opacity: 0, y: 40 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, type: "spring" }}
           className="mb-16 text-center"
         >
-          <motion.span 
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="inline-block px-4 py-1.5 mb-4 text-sm text-primary bg-primary/10 rounded-full"
-          >
+          <span className="inline-block px-4 py-1.5 mb-4 text-sm text-primary bg-primary/10 rounded-full">
             About Me
-          </motion.span>
+          </span>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <motion.span 
-              className="text-gradient inline-block"
-              initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
-              animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              Passionate Developer
-            </motion.span>
+            <span className="text-gradient inline-block">Passionate Developer</span>
           </h2>
-          <motion.div 
-            initial={{ scaleX: 0 }}
-            animate={isInView ? { scaleX: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-24 h-1 bg-linear-to-r from-transparent via-primary to-transparent rounded-full mx-auto"
-          />
+          <div className="w-24 h-1 bg-linear-to-r from-transparent via-primary to-transparent rounded-full mx-auto" />
         </motion.div>
 
-        {/* Stats Row with Parallax */}
+        {/* Stats Row */}
         <motion.div
+          ref={statsRef}
           style={{ y: statsY }}
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
           className="grid grid-cols-3 gap-4 mb-16"
         >
-          {stats.map((stat, index) => (
-            <motion.div
+          {stats.map((stat, i) => (
+            <div
               key={stat.label}
-              initial={{ opacity: 0, y: 50, scale: 0.9, rotateX: 15 }}
-              animate={isInView ? { opacity: 1, y: 0, scale: 1, rotateX: 0 } : {}}
-              transition={{ 
-                duration: 0.7, 
-                delay: 0.3 + index * 0.15,
-                ease: [0.25, 0.46, 0.45, 0.94]
-              }}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="glass-card p-6 rounded-2xl text-center group cursor-default relative overflow-hidden"
-              style={{ transformPerspective: 1000 }}
+              className="stat-card glass-card p-6 rounded-2xl text-center group cursor-default relative overflow-hidden"
+              style={{ transformStyle: 'preserve-3d' }}
             >
-              {/* Glow effect on hover */}
               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              {/* Icon with pulse animation */}
-              <motion.div
-                animate={isInView ? { scale: [1, 1.2, 1] } : {}}
-                transition={{ duration: 0.6, delay: 0.5 + index * 0.2 }}
-              >
-                <stat.icon className="w-6 h-6 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
-              </motion.div>
-              
-              {/* Animated Counter */}
+              <stat.icon className="w-6 h-6 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
               <div className="text-3xl md:text-4xl font-bold text-gradient relative z-10">
-                <AnimatedCounter 
-                  value={stat.value} 
-                  suffix={stat.suffix} 
-                  duration={2 + index * 0.3}
-                />
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} duration={2 + i * 0.3} />
               </div>
-              
               <div className="text-sm text-muted-foreground mt-1 relative z-10">{stat.label}</div>
-              
-              {/* Bottom accent line */}
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={isInView ? { scaleX: 1 } : {}}
-                transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-primary/50 to-transparent"
-              />
-            </motion.div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-primary/50 to-transparent" />
+            </div>
           ))}
         </motion.div>
 
+
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Left Column - Text with Parallax & Text Reveal */}
+          {/* Left Column - Text */}
           <motion.div
             style={{ y: leftColumnY }}
             initial={{ opacity: 0, x: -40 }}
@@ -463,8 +455,7 @@ const AboutSection = () => {
             </motion.blockquote>
           </motion.div>
 
-
-          {/* Right Column - Skills with Parallax */}
+          {/* Right Column - Skills */}
           <motion.div
             style={{ y: rightColumnY }}
             initial={{ opacity: 0, x: 40 }}
@@ -472,60 +463,27 @@ const AboutSection = () => {
             transition={{ duration: 0.8, delay: 0.4, type: "spring" }}
             className="space-y-8"
           >
-            {/* Principles with Connecting Lines */}
-            <div className="relative">
-              {/* Connecting Lines - Center Cross */}
+            {/* Principles with 3D Cards */}
+            <div ref={principlesRef} className="relative" style={{ perspective: '1200px' }}>
+              {/* Connecting Lines */}
               <div className="absolute inset-0 pointer-events-none hidden md:block">
-                {/* Horizontal line */}
-                <motion.div 
-                  initial={{ scaleX: 0 }}
-                  animate={isInView ? { scaleX: 1 } : {}}
-                  transition={{ duration: 0.8, delay: 0.8 }}
-                  className="absolute top-1/2 left-[15%] right-[15%] h-px bg-linear-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2"
-                />
-                {/* Vertical line */}
-                <motion.div 
-                  initial={{ scaleY: 0 }}
-                  animate={isInView ? { scaleY: 1 } : {}}
-                  transition={{ duration: 0.8, delay: 0.9 }}
-                  className="absolute left-1/2 top-[15%] bottom-[15%] w-px bg-linear-to-b from-transparent via-primary/30 to-transparent -translate-x-1/2"
-                />
-                {/* Center dot */}
-                <motion.div 
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={isInView ? { scale: 1, opacity: 1 } : {}}
-                  transition={{ duration: 0.4, delay: 1.1 }}
-                  className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary/50 rounded-full -translate-x-1/2 -translate-y-1/2"
-                />
+                <div className="connecting-line absolute top-1/2 left-[15%] right-[15%] h-px bg-linear-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2 origin-center" />
+                <div className="connecting-line absolute left-1/2 top-[15%] bottom-[15%] w-px bg-linear-to-b from-transparent via-primary/30 to-transparent -translate-x-1/2 origin-center" />
+                <div className="connecting-line absolute top-1/2 left-1/2 w-2 h-2 bg-primary/50 rounded-full -translate-x-1/2 -translate-y-1/2" />
               </div>
 
-              {/* Principles Grid - Cards from different directions */}
-              <motion.div 
-                variants={principlesContainerVariants}
-                initial="hidden"
-                animate={isInView ? "visible" : "hidden"}
-                className="grid grid-cols-2 gap-4 relative z-10"
-              >
-                {principles.map((item, index) => (
+              <div className="grid grid-cols-2 gap-4 relative z-10">
+                {principles.map((item) => (
                   <motion.div
                     key={item.title}
-                    variants={createCardVariants(cardDirections[index])}
-                    whileHover={{ 
-                      scale: 1.05, 
-                      y: -8,
-                      rotate: 0,
-                      transition: { duration: 0.2 }
-                    }}
-                    className="relative glass-card p-5 rounded-xl overflow-hidden group cursor-default transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10"
+                    className="principle-card relative glass-card p-5 rounded-xl overflow-hidden group cursor-default"
+                    style={{ transformStyle: 'preserve-3d' }}
+                    whileHover={{ scale: 1.05, y: -8, rotateY: 0, rotateX: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {/* Gradient background on hover */}
                     <div className={`absolute inset-0 bg-linear-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                    
-                    {/* Border glow on hover */}
                     <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-primary/30 transition-colors duration-300" />
-                    
                     <div className="relative z-10">
-                      {/* Icon with gradient background */}
                       <div className={`p-2.5 rounded-xl bg-linear-to-br ${item.iconGradient} w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
@@ -534,38 +492,21 @@ const AboutSection = () => {
                     </div>
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
             </div>
 
-            {/* Languages - Slide from right */}
-            <div>
-              <motion.h4 
-                initial={{ opacity: 0, x: -20 }}
-                animate={isInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.9 }}
-                className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"
-              >
-                <motion.div 
-                  initial={{ scaleX: 0 }}
-                  animate={isInView ? { scaleX: 1 } : {}}
-                  transition={{ duration: 0.4, delay: 1.0 }}
-                  className="w-8 h-px bg-primary/50 origin-left" 
-                />
+            {/* Languages */}
+            <div ref={languagesRef}>
+              <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="w-8 h-px bg-primary/50" />
                 Languages
-              </motion.h4>
+              </h4>
               <div className="flex flex-wrap gap-3">
-                {languages.map((lang, index) => (
+                {languages.map((lang) => (
                   <motion.span
                     key={lang}
-                    initial={{ opacity: 0, x: 30, scale: 0.8 }}
-                    animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
-                    transition={{ 
-                      duration: 0.5, 
-                      delay: 1.0 + index * 0.08,
-                      ease: [0.25, 0.46, 0.45, 0.94]
-                    }}
+                    className="lang-tag px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium border border-primary/30 cursor-default"
                     whileHover={{ scale: 1.1, y: -2 }}
-                    className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium border border-primary/30 cursor-default"
                   >
                     {lang}
                   </motion.span>
@@ -573,40 +514,18 @@ const AboutSection = () => {
               </div>
             </div>
 
-            {/* Tech Stack - Wave animation */}
-            <div>
-              <motion.h4 
-                initial={{ opacity: 0, x: -20 }}
-                animate={isInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: 1.1 }}
-                className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"
-              >
-                <motion.div 
-                  initial={{ scaleX: 0 }}
-                  animate={isInView ? { scaleX: 1 } : {}}
-                  transition={{ duration: 0.4, delay: 1.2 }}
-                  className="w-8 h-px bg-primary/50 origin-left" 
-                />
+            {/* Tech Stack */}
+            <div ref={techStackRef}>
+              <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+                <div className="w-8 h-px bg-primary/50" />
                 Tech Stack
-              </motion.h4>
+              </h4>
               <div className="flex flex-wrap gap-2">
-                {techStack.map((tech, index) => (
+                {techStack.map((tech) => (
                   <motion.span
                     key={tech}
-                    initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                    animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
-                    transition={{ 
-                      duration: 0.4, 
-                      delay: 1.2 + index * 0.04,
-                      ease: [0.25, 0.46, 0.45, 0.94]
-                    }}
-                    whileHover={{ 
-                      scale: 1.1, 
-                      y: -2,
-                      backgroundColor: "hsl(var(--primary) / 0.2)",
-                      color: "hsl(var(--primary))"
-                    }}
-                    className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm cursor-default transition-colors"
+                    className="tech-tag px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm cursor-default"
+                    whileHover={{ scale: 1.1, y: -2, backgroundColor: "hsl(var(--primary) / 0.2)", color: "hsl(var(--primary))" }}
                   >
                     {tech}
                   </motion.span>
