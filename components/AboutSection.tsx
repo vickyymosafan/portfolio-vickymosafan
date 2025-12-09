@@ -282,6 +282,94 @@ const AboutSection = () => {
       );
     }
 
+    // ========================================================================
+    // EXIT ANIMATION - Transition to HorizontalScrollBridge
+    // ========================================================================
+    if (containerRef.current) {
+      // Stats cards compress on exit
+      if (statsRef.current) {
+        const statCards = statsRef.current.querySelectorAll('.stat-card');
+        gsap.to(statCards, {
+          scaleY: 0.8,
+          opacity: 0.3,
+          y: 30,
+          stagger: 0.05,
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'bottom 30%',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+
+      // Principles cards fold on exit
+      if (principlesRef.current) {
+        const principleCards = principlesRef.current.querySelectorAll('.principle-card');
+        gsap.to(principleCards, {
+          rotateX: 20,
+          opacity: 0.2,
+          y: 40,
+          scale: 0.9,
+          stagger: 0.03,
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'bottom 30%',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+
+      // Tech tags scatter on exit
+      if (techStackRef.current) {
+        const techTags = techStackRef.current.querySelectorAll('.tech-tag');
+        gsap.to(techTags, {
+          y: 50,
+          opacity: 0,
+          scale: 0.7,
+          stagger: 0.02,
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'bottom 25%',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+
+      // Languages scatter on exit
+      if (languagesRef.current) {
+        const langTags = languagesRef.current.querySelectorAll('.lang-tag');
+        gsap.to(langTags, {
+          x: 30,
+          opacity: 0,
+          scale: 0.8,
+          stagger: 0.03,
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'bottom 25%',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+
+      // Gradient orbs move toward bottom center (portal effect)
+      const orbs = containerRef.current.querySelectorAll('.gradient-orb');
+      gsap.to(orbs, {
+        y: 100,
+        scale: 0.6,
+        opacity: 0.3,
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'bottom 30%',
+          end: 'bottom top',
+          scrub: 1,
+        }
+      });
+    }
+
   }, []);
 
 
@@ -333,22 +421,32 @@ const AboutSection = () => {
       <motion.div style={{ y: backgroundY }} className="absolute inset-0 pointer-events-none">
         <motion.div 
           style={{ scale: orbScale }}
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
+          className="gradient-orb absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
           animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div 
           style={{ scale: orbScale }}
-          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+          className="gradient-orb absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
           animate={{ x: [0, -25, 0], y: [0, 20, 0] }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"
+          className="gradient-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
+      
+      {/* Portal Effect - Bottom transition to HorizontalScrollBridge */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-20">
+        <div 
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-64 opacity-0"
+          style={{
+            background: 'radial-gradient(ellipse at center bottom, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
+          }}
+        />
+      </div>
 
       <div className="max-w-6xl mx-auto relative" ref={ref}>
         {/* Section Header */}

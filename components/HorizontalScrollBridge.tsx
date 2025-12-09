@@ -9,6 +9,11 @@ import { useGSAP, gsap, ScrollTrigger } from '@/hooks/use-gsap';
 const FRAME_COUNT = 191;
 const BASE_URL = 'https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/car1';
 
+// Easing function - easeInOutCubic for smooth cinematic feel (same as useAutoScroll)
+const easeInOutCubic = (t: number): number => {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
+
 // SSR-safe mount detection hook
 const useIsMounted = () => {
   return useSyncExternalStore(
@@ -75,6 +80,10 @@ const HorizontalScrollBridge = () => {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isCanvasLoading, setIsCanvasLoading] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const hasAutoPlayedRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
   const isMounted = useIsMounted();
 
   // Get frame URL helper
@@ -190,6 +199,94 @@ const HorizontalScrollBridge = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // ============================================================================
+  // AUTO-SCROLL FUNCTION - Using requestAnimationFrame like useAutoScroll hook
+  // ============================================================================
+  const startAutoScroll = useCallback(() => {
+    if (hasAutoPlayedRef.current || !containerRef.current || !panelsContainerRef.current) return;
+    
+    hasAutoPlayedRef.current = true;
+    setIsAutoPlaying(true);
+    
+    const startPosition = window.scrollY;
+    const scrollDistance = panelsContainerRef.current.scrollWidth - window.innerWidth;
+    const containerTop = containerRef.current.offsetTop;
+    const targetScroll = containerTop + scrollDistance;
+    const distance = targetScroll - startPosition;
+    
+    // Don't scroll if distance is too small
+    if (distance <= 50) {
+      setIsAutoPlaying(false);
+      return;
+    }
+    
+    const duration = 4000; // 4 seconds for smooth 191 frame playback
+    const startTime = performance.now();
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeInOutCubic(progress);
+      
+      const currentPosition = startPosition + (distance * easedProgress);
+      window.scrollTo(0, currentPosition);
+      
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        setIsAutoPlaying(false);
+      }
+    };
+    
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  // ============================================================================
+  // INTERSECTION OBSERVER - Trigger auto-scroll when section enters viewport
+  // ============================================================================
+  useEffect(() => {
+    if (!isMounted || !containerRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAutoPlayedRef.current) {
+            startAutoScroll();
+          }
+        });
+      },
+      { threshold: 0.3 } // Trigger when 30% visible
+    );
+    
+    observer.observe(containerRef.current);
+    
+    return () => observer.disconnect();
+  }, [isMounted, startAutoScroll]);
+
+  // ============================================================================
+  // USER INTERRUPT HANDLER - Cancel auto-scroll on manual scroll
+  // ============================================================================
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const handleWheel = () => {
+      if (animationFrameRef.current && isAutoPlaying) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+        setIsAutoPlaying(false);
+      }
+    };
+    
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isMounted, isAutoPlaying]);
+
 
   // ============================================================================
   // GSAP HORIZONTAL SCROLL WITH SNAP
@@ -216,6 +313,7 @@ const HorizontalScrollBridge = () => {
           duration: { min: 0.2, max: 0.5 },
           ease: 'power2.inOut',
         },
+        onToggle: (self) => setIsInView(self.isActive),
         onUpdate: (self) => {
           const progress = self.progress;
           setScrollProgress(progress);
@@ -333,6 +431,30 @@ const HorizontalScrollBridge = () => {
       }
     });
 
+    // ========================================================================
+    // ENTRY REVEAL ANIMATION - Canvas expands from center
+    // ========================================================================
+    if (canvasContainerRef.current) {
+      gsap.fromTo(canvasContainerRef.current,
+        { 
+          scale: 0.85, 
+          opacity: 0,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 1,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top 80%',
+            end: 'top 40%',
+            scrub: 0.5,
+          }
+        }
+      );
+    }
+
     // Cleanup
     return () => {
       ScrollTrigger.getAll().forEach(st => st.kill());
@@ -343,7 +465,7 @@ const HorizontalScrollBridge = () => {
   return (
     <section 
       ref={containerRef} 
-      className="relative bg-background"
+      className="relative bg-background overflow-hidden"
       id="journey-bridge"
     >
       {/* Frame-by-Frame Canvas Background */}
@@ -541,8 +663,12 @@ const HorizontalScrollBridge = () => {
         ))}
       </div>
 
-      {/* Enhanced Progress indicator */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-50">
+      {/* Enhanced Progress indicator - only visible when section is active */}
+      <div 
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-50 transition-opacity duration-300 ${
+          isInView ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
         {/* Progress bar */}
         <div className="w-32 h-1 bg-primary/20 rounded-full overflow-hidden">
           <div 
@@ -583,18 +709,29 @@ const HorizontalScrollBridge = () => {
           <span>{panels.length}</span>
         </div>
         
-        {/* Frame counter */}
-        <div 
-          className="text-[10px] text-muted-foreground/50 font-mono"
-          style={{ opacity: scrollProgress > 0 ? 0.7 : 0.3, transition: 'opacity 0.3s' }}
-        >
-          Frame {String(currentFrame).padStart(3, '0')}/{FRAME_COUNT - 1}
-        </div>
+        {/* Auto-play indicator */}
+        {isAutoPlaying && (
+          <motion.div 
+            className="flex items-center gap-2 text-[10px] text-primary font-mono"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <motion.div 
+              className="w-1.5 h-1.5 bg-primary rounded-full"
+              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+            />
+            Auto-playing...
+          </motion.div>
+        )}
       </div>
 
-      {/* Side scroll hint */}
+      {/* Side scroll hint - only visible when section is active */}
       <motion.div 
-        className="fixed right-8 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground z-50"
+        className={`fixed right-8 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground z-50 transition-opacity duration-300 ${
+          isInView ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         animate={{ x: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
