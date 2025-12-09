@@ -322,9 +322,9 @@ const HorizontalScrollBridge = () => {
           const frameIndex = Math.floor(progress * (FRAME_COUNT - 1));
           setCurrentFrame(frameIndex);
           
-          // Canvas parallax scale effect (1.0 → 1.15)
+          // Canvas parallax scale effect (1.2 → 1.35) - zoomed in to hide watermark
           if (canvasContainerRef.current) {
-            const scale = 1 + (progress * 0.15);
+            const scale = 1.2 + (progress * 0.15);
             canvasContainerRef.current.style.transform = `scale(${scale})`;
           }
           
@@ -437,11 +437,11 @@ const HorizontalScrollBridge = () => {
     if (canvasContainerRef.current) {
       gsap.fromTo(canvasContainerRef.current,
         { 
-          scale: 0.85, 
+          scale: 1.05, 
           opacity: 0,
         },
         {
-          scale: 1,
+          scale: 1.2,
           opacity: 1,
           duration: 1,
           ease: 'power2.out',
