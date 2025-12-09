@@ -79,7 +79,7 @@ const HorizontalScrollBridge = () => {
   const [activePanel, setActivePanel] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isCanvasLoading, setIsCanvasLoading] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [, setScrollProgress] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const hasAutoPlayedRef = useRef(false);
