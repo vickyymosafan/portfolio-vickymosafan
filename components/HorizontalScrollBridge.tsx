@@ -66,12 +66,15 @@ const HorizontalScrollBridge = () => {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const loadedCountRef = useRef(0);
   
   const [activePanel, setActivePanel] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isCanvasLoading, setIsCanvasLoading] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const isMounted = useIsMounted();
 
   // Get frame URL helper
@@ -215,10 +218,32 @@ const HorizontalScrollBridge = () => {
         },
         onUpdate: (self) => {
           const progress = self.progress;
+          setScrollProgress(progress);
           
           // Update frame index for canvas animation
           const frameIndex = Math.floor(progress * (FRAME_COUNT - 1));
           setCurrentFrame(frameIndex);
+          
+          // Canvas parallax scale effect (1.0 → 1.15)
+          if (canvasContainerRef.current) {
+            const scale = 1 + (progress * 0.15);
+            canvasContainerRef.current.style.transform = `scale(${scale})`;
+          }
+          
+          // Dynamic overlay opacity (0.5 → 0.3)
+          if (overlayRef.current) {
+            const opacity = 0.5 - (progress * 0.2);
+            overlayRef.current.style.opacity = String(opacity);
+          }
+          
+          // Golden glow effect - intensity based on curve phase (frames 64-127)
+          if (glowRef.current) {
+            const isCurvePhase = frameIndex >= 64 && frameIndex <= 127;
+            const glowIntensity = isCurvePhase ? 0.6 : 0.3;
+            const glowX = 50 + (progress * 20); // Move glow right as car turns
+            const glowY = 50 - (progress * 10); // Move glow up slightly
+            glowRef.current.style.background = `radial-gradient(ellipse at ${glowX}% ${glowY}%, rgba(255, 215, 0, ${glowIntensity}) 0%, transparent 50%)`;
+          }
           
           const newActivePanel = Math.round(progress * (totalPanels - 1));
           if (newActivePanel !== activePanel) {
@@ -324,7 +349,8 @@ const HorizontalScrollBridge = () => {
       {/* Frame-by-Frame Canvas Background */}
       <div 
         ref={canvasContainerRef} 
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 origin-center"
+        style={{ willChange: 'transform' }}
       >
         {/* Loading indicator */}
         {isCanvasLoading && (
@@ -343,16 +369,30 @@ const HorizontalScrollBridge = () => {
           }}
         />
         
+        {/* Golden glow layer - follows car headlights */}
+        <div 
+          ref={glowRef}
+          className="absolute inset-0 pointer-events-none mix-blend-screen"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 50%)',
+            transition: 'background 0.1s ease-out',
+          }}
+        />
+        
         {/* Vignette overlay for depth */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%)',
+            background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)',
           }}
         />
         
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-background/40 pointer-events-none" />
+        {/* Dynamic dark overlay for text readability */}
+        <div 
+          ref={overlayRef}
+          className="absolute inset-0 bg-background pointer-events-none"
+          style={{ opacity: 0.5, transition: 'opacity 0.1s ease-out' }}
+        />
         
         {/* Subtle grid pattern overlay */}
         <div 
@@ -383,13 +423,26 @@ const HorizontalScrollBridge = () => {
 
             {/* Content */}
             <div className="relative z-10 text-center px-8 max-w-4xl">
-              {/* Icon with 3D transform */}
+              {/* Icon with 3D transform and glow effect */}
               <div 
-                className="panel-icon mb-8 inline-flex items-center justify-center"
+                className="panel-icon mb-8 inline-flex items-center justify-center relative"
                 style={{ transformStyle: 'preserve-3d' }}
               >
+                {/* Icon glow pulse */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%)',
+                    filter: 'blur(20px)',
+                  }}
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    opacity: [0.3, 0.6, 0.3]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
                 <motion.div 
-                  className="p-6 rounded-2xl bg-primary/10 border border-primary/20"
+                  className="relative p-6 rounded-2xl bg-primary/10 border border-primary/20 backdrop-blur-sm"
                   animate={{ rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                   whileHover={{ scale: 1.1, rotateY: 15 }}
@@ -406,10 +459,24 @@ const HorizontalScrollBridge = () => {
                 <span className="title-text text-muted-foreground block">
                   <SplitText text={panel.title} />
                 </span>
-                <span className="subtitle-text text-gradient block">
+                <span 
+                  className="subtitle-text text-gradient block relative"
+                  style={{
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 3s ease-in-out infinite',
+                  }}
+                >
                   <SplitText text={panel.subtitle} />
                 </span>
               </h2>
+              
+              {/* Shimmer keyframes - injected via style tag */}
+              <style jsx>{`
+                @keyframes shimmer {
+                  0%, 100% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                }
+              `}</style>
 
               {/* Description */}
               <p className="panel-description text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
@@ -432,21 +499,43 @@ const HorizontalScrollBridge = () => {
               )}
             </div>
 
-            {/* Decorative floating elements */}
+            {/* Enhanced floating particles with horizontal drift */}
             <motion.div
               className="absolute bottom-20 left-20 w-2 h-2 bg-primary/50 rounded-full"
-              animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+              animate={{ 
+                scale: [1, 1.5, 1], 
+                opacity: [0.5, 1, 0.5],
+                x: [0, 50, 100], // Horizontal drift
+              }}
+              transition={{ duration: 3, repeat: Infinity, delay: index * 0.3, ease: "easeInOut" }}
             />
             <motion.div
               className="absolute top-32 right-32 w-3 h-3 bg-primary/30 rounded-full"
-              animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity, delay: 0.5 + index * 0.2 }}
+              animate={{ 
+                scale: [1, 1.3, 1], 
+                opacity: [0.3, 0.7, 0.3],
+                x: [0, 30, 60], // Horizontal drift
+              }}
+              transition={{ duration: 4, repeat: Infinity, delay: 0.5 + index * 0.2, ease: "easeInOut" }}
             />
             <motion.div
               className="absolute top-1/4 left-1/4 w-1 h-1 bg-accent/40 rounded-full"
-              animate={{ y: [0, -30, 0], opacity: [0.2, 0.6, 0.2] }}
-              transition={{ duration: 4, repeat: Infinity, delay: index * 0.4 }}
+              animate={{ 
+                y: [0, -30, 0], 
+                x: [0, 40, 80], // Horizontal drift
+                opacity: [0.2, 0.6, 0.2] 
+              }}
+              transition={{ duration: 5, repeat: Infinity, delay: index * 0.4, ease: "easeInOut" }}
+            />
+            {/* Additional golden particle */}
+            <motion.div
+              className="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 bg-[#FFD700]/40 rounded-full"
+              animate={{ 
+                scale: [1, 1.8, 1],
+                x: [0, 60, 120],
+                opacity: [0.3, 0.8, 0.3]
+              }}
+              transition={{ duration: 4, repeat: Infinity, delay: 0.2 + index * 0.3, ease: "easeInOut" }}
             />
           </div>
         ))}
@@ -492,6 +581,14 @@ const HorizontalScrollBridge = () => {
           <span className="text-primary">{activePanel + 1}</span>
           <span className="mx-1">/</span>
           <span>{panels.length}</span>
+        </div>
+        
+        {/* Frame counter */}
+        <div 
+          className="text-[10px] text-muted-foreground/50 font-mono"
+          style={{ opacity: scrollProgress > 0 ? 0.7 : 0.3, transition: 'opacity 0.3s' }}
+        >
+          Frame {String(currentFrame).padStart(3, '0')}/{FRAME_COUNT - 1}
         </div>
       </div>
 
