@@ -1,9 +1,13 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { useRef, useState, useSyncExternalStore } from 'react';
+import { useRef, useState, useSyncExternalStore, useEffect, useCallback } from 'react';
 import { ArrowDown, Briefcase, Code2, Rocket, Sparkles } from 'lucide-react';
 import { useGSAP, gsap, ScrollTrigger } from '@/hooks/use-gsap';
+
+// Frame sequence constants
+const FRAME_COUNT = 191;
+const BASE_URL = 'https://kgsvqtknngpsfqovfurw.supabase.co/storage/v1/object/public/car1';
 
 // SSR-safe mount detection hook
 const useIsMounted = () => {
@@ -60,8 +64,128 @@ const HorizontalScrollBridge = () => {
   const containerRef = useRef<HTMLElement>(null);
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const loadedCountRef = useRef(0);
+  
   const [activePanel, setActivePanel] = useState(0);
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [isCanvasLoading, setIsCanvasLoading] = useState(true);
   const isMounted = useIsMounted();
+
+  // Get frame URL helper
+  const getFrameUrl = useCallback((index: number) => {
+    const paddedIndex = String(index).padStart(3, '0');
+    return `${BASE_URL}/frame_${paddedIndex}_delay-0.04s.webp`;
+  }, []);
+
+  // ============================================================================
+  // FRAME PRELOADING
+  // ============================================================================
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const imageArray: HTMLImageElement[] = [];
+    loadedCountRef.current = 0;
+    imagesRef.current = imageArray;
+
+    const preloadImage = (index: number) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = getFrameUrl(index);
+      img.onload = () => {
+        loadedCountRef.current++;
+        if (loadedCountRef.current >= Math.min(10, FRAME_COUNT)) {
+          setIsCanvasLoading(false);
+        }
+      };
+      img.onerror = () => {
+        loadedCountRef.current++;
+      };
+      imageArray[index] = img;
+    };
+
+    // Load first 10 frames immediately for fast initial display
+    for (let i = 0; i < Math.min(10, FRAME_COUNT); i++) {
+      preloadImage(i);
+    }
+
+    // Lazy load remaining frames
+    const loadRemaining = () => {
+      for (let i = 10; i < FRAME_COUNT; i++) {
+        preloadImage(i);
+      }
+    };
+
+    const timeout = setTimeout(loadRemaining, 500);
+
+    return () => clearTimeout(timeout);
+  }, [isMounted, getFrameUrl]);
+
+  // ============================================================================
+  // CANVAS DRAWING
+  // ============================================================================
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    const img = imagesRef.current[currentFrame];
+
+    if (!canvas || !ctx || !img || !img.complete || img.naturalWidth === 0) return;
+
+    const draw = () => {
+      const container = canvasContainerRef.current;
+      if (!container) return;
+      if (!img.complete || img.naturalWidth === 0) return;
+
+      canvas.width = container.offsetWidth;
+      canvas.height = container.offsetHeight;
+
+      // Cover fit calculation
+      const imgRatio = img.naturalWidth / img.naturalHeight;
+      const canvasRatio = canvas.width / canvas.height;
+
+      let drawWidth, drawHeight, drawX, drawY;
+
+      if (canvasRatio > imgRatio) {
+        drawWidth = canvas.width;
+        drawHeight = canvas.width / imgRatio;
+        drawX = 0;
+        drawY = (canvas.height - drawHeight) / 2;
+      } else {
+        drawHeight = canvas.height;
+        drawWidth = canvas.height * imgRatio;
+        drawX = (canvas.width - drawWidth) / 2;
+        drawY = 0;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      try {
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+      } catch {
+        // Image might be in broken state, skip drawing
+      }
+    };
+
+    requestAnimationFrame(draw);
+  }, [currentFrame]);
+
+  // ============================================================================
+  // CANVAS RESIZE HANDLER
+  // ============================================================================
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      const container = canvasContainerRef.current;
+      if (canvas && container) {
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
 
   // ============================================================================
@@ -91,6 +215,11 @@ const HorizontalScrollBridge = () => {
         },
         onUpdate: (self) => {
           const progress = self.progress;
+          
+          // Update frame index for canvas animation
+          const frameIndex = Math.floor(progress * (FRAME_COUNT - 1));
+          setCurrentFrame(frameIndex);
+          
           const newActivePanel = Math.round(progress * (totalPanels - 1));
           if (newActivePanel !== activePanel) {
             setActivePanel(newActivePanel);
@@ -192,42 +321,46 @@ const HorizontalScrollBridge = () => {
       className="relative bg-background"
       id="journey-bridge"
     >
-      {/* Background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Grid pattern */}
+      {/* Frame-by-Frame Canvas Background */}
+      <div 
+        ref={canvasContainerRef} 
+        className="absolute inset-0 z-0"
+      >
+        {/* Loading indicator */}
+        {isCanvasLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background">
+            <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        
+        {/* Canvas for frame rendering */}
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full object-cover"
+          style={{ 
+            opacity: isCanvasLoading ? 0 : 1, 
+            transition: 'opacity 0.5s ease',
+          }}
+        />
+        
+        {/* Vignette overlay for depth */}
         <div 
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%)',
+          }}
+        />
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-background/40 pointer-events-none" />
+        
+        {/* Subtle grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
           style={{
             backgroundImage: `linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)`,
             backgroundSize: '60px 60px',
           }}
-        />
-        
-        {/* Noise Texture */}
-        <svg className="absolute inset-0 w-full h-full opacity-[0.015]">
-          <filter id="noiseFilterBridge">
-            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#noiseFilterBridge)" />
-        </svg>
-      </div>
-      
-      {/* Animated Gradient Orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div 
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-          animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
-          animate={{ x: [0, -25, 0], y: [0, 20, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/5 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
 
